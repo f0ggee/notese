@@ -3,4 +3,5 @@ run_tests:
   before_script: app go  tidy
 
   script:
-    -  go test ./..
+    -  make test
+    
