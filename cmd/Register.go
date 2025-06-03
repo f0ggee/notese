@@ -1,28 +1,15 @@
 package cmd
 
 import (
+	"Project2/iteranal"
 	"context"
-	"crypto/rand"
 	_ "crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
 )
-
-func generateid() (string, error) {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		slog.Error("Error generating id", err)
-		return "", err
-
-	}
-	return hex.EncodeToString(b), nil
-
-}
 
 type Logincmd struct {
 	DB *sql.DB
@@ -30,25 +17,26 @@ type Logincmd struct {
 
 type Person struct {
 	Name     string `json:"name"`
-	Email    int    `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	var err error
 	var person *Person
 
-	if r.Method != "GET" {
+	///контекст
+
+	ctx := iteranal.Contexte()
+
+	if r.Method != "POST" {
 		http.Error(w, "Only GET method is supported.", http.StatusMethodNotAllowed)
 		return
 
 	}
 
-	if err = json.NewDecoder(r.Body).Decode(&Person{}); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&person); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		slog.Info("Func register1:", err)
 		return
@@ -57,24 +45,22 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 	var exits bool
 
 	err = h.DB.QueryRowContext(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
+	///проверка на валидность запроса
 
-	switch {
-	case err == context.DeadlineExceeded:
-		http.Error(w, "Timeout trying to register a person", http.StatusRequestTimeout)
+	if err == context.DeadlineExceeded {
 		slog.Info("Func register2:", err)
+		http.Error(w, "Timed out", http.StatusRequestTimeout)
 		return
-
-	case err != sql.ErrNoRows:
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+	} else if err == sql.ErrNoRows {
 		slog.Info("Func register3:", err)
+		http.Error(w, "Not found", http.StatusNotFound)
 		return
-
-	case err != nil:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else if err != nil {
 		slog.Info("Func register4:", err)
+		http.Error(w, "Internal Error", http.StatusInternalServerError)
 		return
-
 	}
+	////
 
 	if exits {
 		slog.Info("Func register5:person already exists")
@@ -85,7 +71,7 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 
 	var userid int64
 
-	err = h.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,passowr) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
+	err = h.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
 
 	switch {
 	case err == context.DeadlineExceeded:
@@ -104,7 +90,7 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	id, err := generateid()
+	id, err := iteranal.Generateid()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		slog.Info("Func register9:", err)

@@ -14,6 +14,14 @@ import (
 
 func main() {
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "./fronted/index.html")
+			return
+		}
+		http.ServeFile(w, r, "./fronted"+r.URL.Path)
+	})
+
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Ошибка загрузки .env файла")
@@ -27,9 +35,10 @@ func main() {
 	defer db.Close()
 
 	e := &cmd.Logincmd{DB: db}
-	mux := http.NewServeMux()
+	a := &cmd.Handler_login{DB: db}
 
-	mux.Handle("/register/api/", http.HandlerFunc(e.Register))
+	http.HandleFunc("/register/api", e.Register)
+	http.HandleFunc("/login/api", a.Login)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }

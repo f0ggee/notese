@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Главная</title>
+  <style>
+    body.dark-theme {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 1rem 2rem;
+    }
+
+    #profileBtn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4f46e5;
+      color: #ffffff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #profileBtn:hover {
+      background-color: #6366f1;
+    }
+
+    main {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .instruction {
+      max-width: 600px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+
+    footer {
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    #addNoteBtn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4f46e5;
+      color: #ffffff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #addNoteBtn:hover {
+      background-color: #6366f1;
+    }
+
+    /* Новый блок с подробной информацией */
+    section.more-info {
+      padding: 3rem 2rem;
+      background-color: #1e1e1e;
+    }
+
+    section.more-info h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    section.more-info p {
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 1rem;
+      line-height: 1.6;
+      text-align: justify;
+    }
+  </style>
+</head>
+<body class="dark-theme">
+
+<header>
+  <button id="profileBtn">Профиль</button>
+</header>
+
+<main>
+  <div class="instruction">
+    <h1>Добро пожаловать в NotesApp</h1>
+    <p>
+      Здесь вы можете сохранять свои мысли и идеи, добавлять новые заметки,
+      редактировать и удалять их в любое время.
+      Всё хранится в вашем личном кабинете, доступном только вам.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <button id="addNoteBtn">Добавить заметку</button>
+</footer>
+
+<section class="more-info">
+  <h2>Подробнее о NotesApp</h2>
+  <p>
+    NotesApp — это современное веб-приложение для хранения ваших личных заметок. Мы делаем акцент на удобство и безопасность: вы можете быстро создавать заметки, сортировать их по дате или тегам, использовать поиск, а также синхронизировать данные между устройствами.
+    <br><br>
+    Все данные надёжно защищены и доступны только авторизованному пользователю. Наша миссия — помочь вам не терять важные мысли, идеи и напоминания, сохраняя всё в одном месте.
+    <br><br>
+    Мы постоянно развиваем NotesApp, добавляя новые функции: напоминания, совместный доступ, тёмную тему, адаптацию под мобильные устройства и многое другое. Благодарим, что вы с нами!
+  </p>
+</section>
+
+<script>
+  document.getElementById('profileBtn').addEventListener('click', () => {
+    window.location.href = 'profile.html';
+  });
+
+  document.getElementById('addNoteBtn').addEventListener('click', () => {
+    window.location.href = 'notes.html';
+  });
+</script>
+
+</body>
+</html>

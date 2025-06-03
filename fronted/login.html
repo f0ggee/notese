@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход</title>
+  <style>
+    body.dark-theme {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background-color: #1e1e1e;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+      width: 100%;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    form input {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #2b2b2b;
+      color: #ffffff;
+      font-size: 1rem;
+    }
+
+    form input:focus {
+      outline: 2px solid #4f46e5;
+      background-color: #333;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .btn-group button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4f46e5;
+      color: #ffffff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .btn-group button:hover {
+      background-color: #6366f1;
+    }
+
+    #message {
+      margin-top: 1rem;
+      color: #ff6b6b;
+      font-size: 0.9rem;
+      height: 1.2rem;
+    }
+  </style>
+</head>
+<body class="dark-theme">
+<div class="container">
+  <h1>Добро пожаловать</h1>
+
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Имя пользователя" required />
+    <input type="password" id="password" placeholder="Пароль" required />
+
+    <div class="btn-group">
+      <button type="submit" id="loginBtn">Войти</button>
+      <button type="button" onclick="window.location.href='register.html'">Регистрация</button>
+    </div>
+
+    <p id="message"></p>
+  </form>
+</div>
+
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const message  = document.getElementById('message');
+
+    if (!username || !password) {
+      message.textContent = 'Введите имя и пароль';
+      return;
+    }
+
+    try {
+      const response = await fetch('/login/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        message.textContent = data.message || 'Ошибка авторизации';
+        return;
+      }
+
+      localStorage.setItem('username', username);
+      window.location.href = 'index.html';   // переход на домашнюю страницу
+    } catch (err) {
+      message.textContent = 'Сервер не отвечает';
+      console.error(err);
+    }
+  });
+</script>
+</body>
+</html>
