@@ -4,5 +4,5 @@ run_tests:
     - go mod tidy
 
   script:
-    - test ./..
+    - go test ./..
     
