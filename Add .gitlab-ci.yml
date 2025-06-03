@@ -1,6 +1,7 @@
 run_tests:
   image:  golang:latest
-  before_script: app go  tidy
+  before_script: 
+    - go mod tidy
 
   script:
     -  make test
