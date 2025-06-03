@@ -39,7 +39,7 @@ func main() {
 	e := &cmd.Logincmd{DB: db}
 	a := &cmd.Handler_login{DB: db}
 
-	http.HandleFunc("/register/api", e.Register)f
+	http.HandleFunc("/register/api", e.Register)
 	http.HandleFunc("/login/api", a.Login)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
