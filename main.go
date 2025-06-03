@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/joho/godotenv"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -34,6 +35,7 @@ func main() {
 	db, _ := cmd.Connect(ctx)
 	defer db.Close()
 
+	slog.Info("main")
 	e := &cmd.Logincmd{DB: db}
 	a := &cmd.Handler_login{DB: db}
 
