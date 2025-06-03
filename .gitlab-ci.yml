@@ -1,0 +1,8 @@
+run_tests:
+  image:  golang:latest
+  before_script: 
+    - go mod tidy
+
+  script:
+    - go test ./..
+    

@@ -1,6 +1,0 @@
-run_tests:
-  image:  golang:latest
-  before_script: app go  tidy
-
-  script:
-    -  go test ./..
