@@ -1,8 +1,10 @@
 run_tests:
   image:  golang:latest
   before_script: 
-    - go mod tidy
+    - go mod tidy && echo "run test"
 
   script:
     - make test
+
+
     
