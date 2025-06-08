@@ -5,21 +5,21 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
-type Handler_login struct {
-	DB *sql.DB
+type LoginHandler struct {
+	DB *pgxpool.Pool
 }
 
-type Handler_register struct {
-	email    string `json:"email"`
-	password string `json:"password"`
+type HandlerRegister struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func (handler *Handler_login) Login(w http.ResponseWriter, r *http.Request) {
+func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -27,11 +27,13 @@ func (handler *Handler_login) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var err error
+	var p HandlerRegister
 
-	var p Handler_register
-	ctx := iteranal.Contexte()
+	// Импорты для работы
+	ctx, cancel := iteranal.Contexte()
+	defer cancel()
 
-	err = json.NewDecoder(r.Body).Decode(&handler)
+	err = json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -39,53 +41,47 @@ func (handler *Handler_login) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var exists bool
 
-	err = handler.DB.QueryRowContext(ctx, "SELECT exists(SELECT 2 FROM person WHERE email=$1 and passowrd=$2)", p.email, p.password).Scan(&exists)
+	err = d.DB.QueryRow(ctx, "SELECT exists(SELECT 2 FROM person WHERE email=$1 and password=$2)", p.Email, p.Password).Scan(&exists)
 	switch {
 	case err == context.DeadlineExceeded:
 		http.Error(w, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
-		slog.Info("func register1:timed out")
-		return
-	case err == sql.ErrNoRows:
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		slog.Info("func register2:no rows")
+		slog.Info("func login1:timed out")
 		return
 
 	case err != nil:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		slog.Info("func register3:no rows")
+		slog.Info("func login3:no rows", err)
 		return
 
 	case !exists:
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		slog.Info("func register4:no rows")
+		slog.Info("func login4:no rows", err)
 		return
 
 	default:
-		slog.Info("func register4:ok")
+		slog.Info("func login4:ok")
 
 	}
 
-	cookie, err := iteranal.Generateid()
+	cookie := iteranal.Generateid()
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		slog.Info("func register5:err", err)
 		return
 	}
 
-	expires := time.Now().Add(time.Hour * 24)
+	///expires := time.Now().Add(time.Hour * 24)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
 		Value:    cookie,
 		Path:     "/",
-		Expires:  expires,
+		MaxAge:   3600,
 		HttpOnly: false,
 		Secure:   true,
 	})
 
-	slog.Info("func register6:ok")
-
-	_, err = handler.DB.ExecContext(ctx, "UPDATE person SET session_id = $1  WHERE email = $2", cookie, p.email)
+	_, err = d.DB.Exec(ctx, "UPDATE person SET session_id = $1  WHERE email = $2", cookie, p.Email)
 
 	switch {
 	case err == context.DeadlineExceeded:

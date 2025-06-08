@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Главная</title>
   <style>
     body.dark-theme {
@@ -11,14 +11,13 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
     }
-
     header {
       display: flex;
       justify-content: flex-end;
+      gap: 0.75rem;
       padding: 1rem 2rem;
     }
-
-    #profileBtn {
+    .header-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 8px;
@@ -28,11 +27,7 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
-    #profileBtn:hover {
-      background-color: #6366f1;
-    }
-
+    .header-btn:hover { background-color: #6366f1; }
     main {
       display: flex;
       justify-content: center;
@@ -40,19 +35,16 @@
       padding: 2rem;
       text-align: center;
     }
-
     .instruction {
       max-width: 600px;
       font-size: 1.1rem;
       line-height: 1.5;
     }
-
     footer {
       padding: 2rem;
       display: flex;
       justify-content: center;
     }
-
     #addNoteBtn {
       padding: 12px 24px;
       border: none;
@@ -63,22 +55,17 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
     #addNoteBtn:hover {
       background-color: #6366f1;
     }
-
-    /* Новый блок с подробной информацией */
     section.more-info {
       padding: 3rem 2rem;
       background-color: #1e1e1e;
     }
-
     section.more-info h2 {
       font-size: 1.5rem;
       margin-bottom: 1rem;
     }
-
     section.more-info p {
       max-width: 700px;
       margin: 0 auto;
@@ -91,7 +78,9 @@
 <body class="dark-theme">
 
 <header>
-  <button id="profileBtn">Профиль</button>
+  <button id="loginBtn" class="header-btn">Вход</button>
+  <button id="registerBtn" class="header-btn">Регистрация</button>
+  <button id="profileBtn" class="header-btn" style="display: none;">Профиль</button>
 </header>
 
 <main>
@@ -121,13 +110,27 @@
 </section>
 
 <script>
-  document.getElementById('profileBtn').addEventListener('click', () => {
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+  const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const profileBtn = document.getElementById('profileBtn');
+  const addNoteBtn = document.getElementById('addNoteBtn');
+
+  if (isLoggedIn) {
+    loginBtn.style.display = 'none';
+    registerBtn.style.display = 'none';
+    profileBtn.style.display = 'inline-block';
+  } else {
+    profileBtn.style.display = 'none';
+    addNoteBtn.style.display = 'none';
+  }
+
+  profileBtn.addEventListener('click', () => {
     window.location.href = 'profile.html';
   });
 
-  document.getElementById('addNoteBtn').addEventListener('click', () => {
-    window.location.href = 'notes.html';
-  });
+  console.log('isLoggedIn:', localStorage.getItem('isLoggedIn'));
 </script>
 
 </body>

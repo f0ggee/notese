@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Регистрация</title>
   <style>
     body.dark-theme {
@@ -19,15 +19,12 @@
       background: #1e1e1e;
       padding: 2rem;
       border-radius: 16px;
-      box-shadow: 0 0 20px rgba(255,255,255,.05);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
       width: 100%;
       max-width: 350px;
       text-align: center;
     }
-    h1 {
-      margin-bottom: 1.5rem;
-      font-size: 1.8rem;
-    }
+    h1 { margin-bottom: 1.5rem; font-size: 1.8rem; }
     form input {
       width: 100%;
       padding: 12px 16px;
@@ -51,15 +48,12 @@
       color: #fff;
       font-size: 1rem;
       cursor: pointer;
-      transition: background .3s ease;
+      transition: background 0.3s;
     }
-    button:hover {
-      background: #6366f1;
-    }
+    button:hover { background: #6366f1; }
     #message {
       margin-top: 1rem;
-      color: #ff6b6b;
-      font-size: .9rem;
+      font-size: 0.9rem;
       height: 1.2rem;
     }
   </style>
@@ -67,27 +61,28 @@
 <body class="dark-theme">
 <div class="container">
   <h1>Регистрация</h1>
-
-  <form id="registerForm">
-    <input type="text"     id="name"     placeholder="Имя"     required />
-    <input type="email"    id="email"    placeholder="Почта"   required />
-    <input type="password" id="password" placeholder="Пароль"  required />
+  <form id="registerForm" autocomplete="off" novalidate>
+    <input type="text" id="name" placeholder="Имя" required />
+    <input type="email" id="email" placeholder="Почта" required />
+    <input type="password" id="password" placeholder="Пароль" required />
     <button type="submit">Зарегистрироваться</button>
     <p id="message"></p>
   </form>
 </div>
 
 <script>
-  document.getElementById('registerForm').addEventListener('submit', async e => {
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name     = document.getElementById('name').value.trim();
-    const email    = document.getElementById('email').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const message  = document.getElementById('message');
+    const message = document.getElementById('message');
+    const form = document.getElementById('registerForm');
 
     if (!name || !email || !password) {
       message.textContent = 'Заполните все поля';
+      message.style.color = '#ff6b6b';
       return;
     }
 
@@ -98,18 +93,23 @@
         body: JSON.stringify({ name, email, password })
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        message.textContent = data.message || 'Ошибка регистрации';
-        return;
-      }
+      const data = await res.json().catch(() => ({}));
 
-      localStorage.setItem('username', name);
-      // после успешной регистрации — переход на страницу входа
-      window.location.href = 'index.html';
-    } catch (err) {
-      console.error(err);
+      if (res.ok) {
+        localStorage.setItem('isLoggedIn', 'true');
+        message.textContent = 'Регистрация удалась! Перенаправляю...';
+        message.style.color = '#4ade80';
+        form.remove();
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+      } else {
+        message.textContent = data.message || 'Ошибка регистрации';
+        message.style.color = '#ff6b6b';
+      }
+    } catch {
       message.textContent = 'Сервер не отвечает';
+      message.style.color = '#ff6b6b';
     }
   });
 </script>

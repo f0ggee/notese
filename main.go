@@ -2,12 +2,14 @@ package main
 
 import (
 	"Project2/cmd"
-	"context"
 	"github.com/joho/godotenv"
-	"log"
 	"log/slog"
+
+	_ "github.com/jackc/pgx/v5/pgxpool"
+	"log"
+	_ "log/slog"
 	"net/http"
-	"time"
+	_ "time"
 )
 
 //TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
@@ -17,30 +19,39 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "./fronted/index.html")
+			http.ServeFile(w, r, "fronted/login.html")
 			return
 		}
 		http.ServeFile(w, r, "./fronted"+r.URL.Path)
 	})
-
+	http.HandleFunc("/addnotes", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./fronted/addnotes.html")
+	})
+	http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./fronted/profile.html")
+	})
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Ошибка загрузки .env файла")
 
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	db := cmd.Connect()
+	if db == nil {
+		slog.Info("database connection failed")
+		return
+	}
 
-	db, _ := cmd.Connect(ctx)
-	defer db.Close()
+	loginHandler := &cmd.LoginHandler{DB: db}
+	profileHandler := &cmd.ProfileHandler{DB: db}
+	registerHandler := &cmd.RegisterHandler{DB: db}
+	addNotesHandler := &cmd.AddNotesHandler{DB: db}
 
-	slog.Info("main")
-	e := &cmd.Logincmd{DB: db}
-	a := &cmd.Handler_login{DB: db}
+	http.HandleFunc("/addnotes/api", addNotesHandler.NewAddNotesCmd)
 
-	http.HandleFunc("/register/api", e.Register)
-	http.HandleFunc("/login/api", a.Login)
+	http.HandleFunc("/register/api", registerHandler.Register)
+	http.HandleFunc("/profile/api", profileHandler.Profile)
+	http.HandleFunc("/login/api", loginHandler.Login)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }

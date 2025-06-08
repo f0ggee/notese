@@ -5,37 +5,40 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
-type AddNotesCmd struct {
-	db *sql.DB
+type AddNotesHandler struct {
+	DB *pgxpool.Pool
 }
 
 type AddNotesResponse struct {
-	title   string `json:"title"`
-	data    string `json:"data"`
-	content string `json:"content"`
+	Title   string    `json:"title"`
+	Data    time.Time `json:"data"`
+	Content string    `json:"content"`
 }
 
-func NewAddNotesCmd(w http.ResponseWriter, r *http.Request) {
+func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "", http.StatusMethodNotAllowed)
 		slog.Info("func addnotes1:")
 		return
 	}
-	var a *AddNotesCmd
-	var err error
-	var b *AddNotesResponse
 
-	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+	var err error
+	var b AddNotesResponse
+
+	if err := json.NewDecoder(r.Body).Decode(&b); err != nil {
 		http.Error(w, "", http.StatusBadRequest)
 		slog.Info("func addnotes2:", err)
 		return
 	}
 
-	ctx := iteranal.Contexte()
+	ctx, cancel := iteranal.Contexte()
+	defer cancel()
 
 	cookie, err := r.Cookie("token")
 	if err != nil {
@@ -44,7 +47,7 @@ func NewAddNotesCmd(w http.ResponseWriter, r *http.Request) {
 	}
 	var id int
 
-	err = a.db.QueryRowContext(ctx, "INSERT INTO notes(title,data,content,author_cookie) VALUES ($1,$2,$3) RETURNING id", b.title, b.data, b.content, cookie.Value).Scan(&id)
+	err = e.DB.QueryRow(ctx, "INSERT INTO notes(title,created_at,content,author_cookie) VALUES ($1,$2,$3,$4) RETURNING id", b.Title, b.Data, b.Content, cookie.Value).Scan(&id)
 
 	if err == context.DeadlineExceeded || err == context.Canceled {
 		http.Error(w, "", http.StatusRequestTimeout)

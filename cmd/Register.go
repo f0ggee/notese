@@ -6,13 +6,13 @@ import (
 	_ "crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
-type Logincmd struct {
-	DB *sql.DB
+type RegisterHandler struct {
+	DB *pgxpool.Pool
 }
 
 type Person struct {
@@ -21,14 +21,15 @@ type Person struct {
 	Password string `json:"password"`
 }
 
-func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
+func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	var person *Person
 
 	///контекст
 
-	ctx := iteranal.Contexte()
+	ctx, cancel := iteranal.Contexte()
+	defer cancel()
 
 	if r.Method != "POST" {
 		http.Error(w, "Only GET method is supported.", http.StatusMethodNotAllowed)
@@ -44,7 +45,7 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 
 	var exits bool
 
-	err = h.DB.QueryRowContext(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
+	err = e.DB.QueryRow(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
 	///проверка на валидность запроса
 
 	if err == context.DeadlineExceeded {
@@ -71,7 +72,7 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 
 	var userid int64
 
-	err = h.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
+	err = e.DB.QueryRow(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
 
 	switch {
 	case err == context.DeadlineExceeded:
@@ -90,24 +91,31 @@ func (h *Logincmd) Register(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-	id, err := iteranal.Generateid()
+	id := iteranal.Generateid()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		slog.Info("Func register9:", err)
 		return
 	}
-	expires := time.Now().Add(time.Hour * 24)
+
+	//expires := time.Now().Add(time.Hour * 24)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
-		Value:    id,
+		Value:    "id",
 		Path:     "/",
-		Expires:  expires,
+		MaxAge:   3600,
 		HttpOnly: false,
-		Secure:   true,
+		Secure:   false,
 	})
 
-	_, err = h.DB.ExecContext(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		slog.Info("Func register10:", err)
+		return
+	}
+
+	_, err = e.DB.Exec(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
 	switch {
 	case err == context.DeadlineExceeded:
 		slog.Info("Func register10:", err)

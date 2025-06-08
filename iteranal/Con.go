@@ -8,22 +8,20 @@ import (
 	"time"
 )
 
-func Contexte() (ctx context.Context) {
+func Contexte() (ctx context.Context, cancel context.CancelFunc) {
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-
-	return ctx
+	return context.WithTimeout(context.Background(), 5*time.Second)
 
 }
 
-func Generateid() (string, error) {
+func Generateid() string {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
 		slog.Error("Error generating id", err)
-		return "", err
+		return ""
 
 	}
-	return hex.EncodeToString(b), nil
+	return hex.EncodeToString(b)
 
 }
