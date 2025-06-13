@@ -6,13 +6,12 @@ import (
 	_ "crypto/rand"
 	"database/sql"
 	"encoding/json"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
 )
 
 type RegisterHandler struct {
-	DB *pgxpool.Pool
+	DB *sql.DB
 }
 
 type Person struct {
@@ -45,7 +44,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	var exits bool
 
-	err = e.DB.QueryRow(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
+	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
 	///проверка на валидность запроса
 
 	if err == context.DeadlineExceeded {
@@ -72,7 +71,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	var userid int64
 
-	err = e.DB.QueryRow(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
 
 	switch {
 	case err == context.DeadlineExceeded:
@@ -115,7 +114,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = e.DB.Exec(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
+	_, err = e.DB.ExecContext(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
 	switch {
 	case err == context.DeadlineExceeded:
 		slog.Info("Func register10:", err)

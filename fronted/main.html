@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Главная</title>
+    <style>
+        body.dark-theme {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+        header {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+        }
+        .header-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .header-btn:hover { background-color: #6366f1; }
+        main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        .instruction {
+            max-width: 600px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+        footer {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        #addNoteBtn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        #addNoteBtn:hover {
+            background-color: #6366f1;
+        }
+        section.more-info {
+            padding: 3rem 2rem;
+            background-color: #1e1e1e;
+        }
+        section.more-info h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        section.more-info p {
+            max-width: 700px;
+            margin: 0 auto;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+<header>
+    <button id="loginBtn" class="header-btn">Вход</button>
+    <button id="registerBtn" class="header-btn">Регистрация</button>
+    <button id="profileBtn" class="header-btn" style="display: none;">Профиль</button>
+</header>
+
+<main>
+    <div class="instruction">
+        <h1>Добро пожаловать в NotesApp</h1>
+        <p>
+            Здесь вы можете сохранять свои мысли и идеи, добавлять новые заметки,
+            редактировать и удалять их в любое время.
+            Всё хранится в вашем личном кабинете, доступном только вам.
+        </p>
+    </div>
+</main>
+
+<footer>
+    <button id="addNoteBtn">Добавить заметку</button>
+</footer>
+
+<section class="more-info">
+    <h2>Подробнее о NotesApp</h2>
+    <p>
+        NotesApp — это современное веб-приложение для хранения ваших личных заметок. Мы делаем акцент на удобство и безопасность: вы можете быстро создавать заметки, сортировать их по дате или тегам, использовать поиск, а также синхронизировать данные между устройствами.
+        <br><br>
+        Все данные надёжно защищены и доступны только авторизованному пользователю. Наша миссия — помочь вам не терять важные мысли, идеи и напоминания, сохраняя всё в одном месте.
+        <br><br>
+        Мы постоянно развиваем NotesApp, добавляя новые функции: напоминания, совместный доступ, тёмную тему, адаптацию под мобильные устройства и многое другое. Благодарим, что вы с нами!
+    </p>
+</section>
+
+<script>
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+    const loginBtn = document.getElementById('loginBtn');
+    const registerBtn = document.getElementById('registerBtn');
+    const profileBtn = document.getElementById('profileBtn');
+    const addNoteBtn = document.getElementById('addNoteBtn');
+
+
+
+    addNoteBtn.addEventListener('click',() => {
+        window.location.href = 'addnotes.html'
+    })
+
+    if (isLoggedIn) {
+        loginBtn.style.display = 'none';
+        registerBtn.style.display = 'none';
+        profileBtn.style.display = 'inline-block';
+    } else {
+        profileBtn.style.display = 'none';
+        addNoteBtn.style.display = 'none';
+    }
+
+    loginBtn.addEventListener('click', () => {
+        window.location.href = 'index.html'; // страница входа
+    });
+
+    registerBtn.addEventListener('click', () => {
+        window.location.href = 'register.html'; // страница регистрации
+    });
+
+    profileBtn.addEventListener('click', () => {
+        window.location.href = 'profile.html';
+    });
+
+    console.log('isLoggedIn:', localStorage.getItem('isLoggedIn'));
+</script>
+
+</body>
+</html>

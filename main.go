@@ -19,16 +19,16 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "fronted/login.html")
+			http.ServeFile(w, r, "fronted/index.html")
 			return
 		}
 		http.ServeFile(w, r, "./fronted"+r.URL.Path)
 	})
-	http.HandleFunc("/addnotes", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./fronted/addnotes.html")
+	http.HandleFunc("/add_notes", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "fronted/addnotes.html")
 	})
 	http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./fronted/profile.html")
+		http.ServeFile(w, r, "fronted/profile.html")
 	})
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -36,7 +36,7 @@ func main() {
 
 	}
 
-	db := cmd.Connect()
+	db, err := cmd.Connect()
 	if db == nil {
 		slog.Info("database connection failed")
 		return

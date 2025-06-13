@@ -5,20 +5,19 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
 	"time"
 )
 
 type AddNotesHandler struct {
-	DB *pgxpool.Pool
+	DB *sql.DB
 }
 
 type AddNotesResponse struct {
-	Title   string    `json:"title"`
-	Data    time.Time `json:"data"`
-	Content string    `json:"content"`
+	Title   string `json:"title"`
+	Data    string `json:"data"`
+	Content string `json:"content"`
 }
 
 func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +35,11 @@ func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request)
 		slog.Info("func addnotes2:", err)
 		return
 	}
-
+	parsedtime, err := time.Parse("2006-01-02T15:04", b.Data)
+	if err != nil {
+		slog.Info("func addnotes2:", err)
+		return
+	}
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
@@ -45,9 +48,9 @@ func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request)
 		slog.Info("func addnotes3:", err)
 		return
 	}
-	var id int
+	var id string
 
-	err = e.DB.QueryRow(ctx, "INSERT INTO notes(title,created_at,content,author_cookie) VALUES ($1,$2,$3,$4) RETURNING id", b.Title, b.Data, b.Content, cookie.Value).Scan(&id)
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO notes(title, created_at, content, author_cookie) values ($1,$2,$3,$4) RETURNING  id", b.Title, parsedtime, b.Content, cookie.Value).Scan(&id)
 
 	if err == context.DeadlineExceeded || err == context.Canceled {
 		http.Error(w, "", http.StatusRequestTimeout)
@@ -67,10 +70,10 @@ func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	slog.Info("func addnotes5: all okay :)", id)
+	slog.Info("func addnotes6: ALL OKAY :0 ")
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte("You notew write"))
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(w)
 
 }

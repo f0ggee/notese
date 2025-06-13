@@ -2,44 +2,40 @@ package cmd
 
 import (
 	"Project2/iteranal"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"database/sql"
+	"errors"
 	_ "github.com/lib/pq"
 	"log/slog"
 	"os"
 )
 
-var Pool *pgxpool.Pool
-
-func Connect() *pgxpool.Pool {
-	var err error
+func Connect() (*sql.DB, error) {
 
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	_, err = pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
-	if err != nil {
-		slog.Info("pgxpool.ParseConfig err:", err)
-		return nil
-	}
-
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		slog.Error("DATABASE_URL environment variable not set")
-		return nil
+		slog.Error("Error loading database URL")
+		return nil, errors.New("Error loading database URL")
+
 	}
 
-	Pool, err = pgxpool.New(ctx, dsn)
+	db, err := sql.Open("postgres", dsn)
+
 	if err != nil {
-		slog.Error("Error connecting to database", err)
-		return nil
+		slog.Error("Error loading database connection")
+		os.Exit(1)
+		return nil, err
 	}
 
-	if err := Pool.Ping(ctx); err != nil {
-		slog.Error("Error pinging database", err)
-		return nil
-
+	if err := db.PingContext(ctx); err != nil {
+		slog.Error("Error pinging database")
+		os.Exit(1)
+		return nil, err
 	}
 
-	return Pool
+	slog.Info("Successfully connected to database")
+	return db, nil
 
 }

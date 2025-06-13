@@ -71,47 +71,69 @@
 </div>
 
 <script>
-  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  document.getElementById('registerForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    const name = document.getElementById('name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const message = document.getElementById('message');
-    const form = document.getElementById('registerForm');
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const resultDiv = document.getElementById('result');
 
-    if (!name || !email || !password) {
-      message.textContent = 'Заполните все поля';
-      message.style.color = '#ff6b6b';
-      return;
-    }
+    // Блокируем кнопку и меняем текст
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Обработка...';
+
+    const payload = {
+      name: form.name.value,
+      email: form.email.value,
+      password: form.password.value
+    };
 
     try {
-      const res = await fetch('/register/api', {
+      const res = await fetch('register/api', {
         method: 'POST',
+        credentials: 'include',              // чтобы установить куки сразу после регистрации
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify(payload)
       });
-
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
 
       if (res.ok) {
+        // Устанавливаем флаг и показываем успех
         localStorage.setItem('isLoggedIn', 'true');
-        message.textContent = 'Регистрация удалась! Перенаправляю...';
-        message.style.color = '#4ade80';
+        resultDiv.textContent = 'Регистрация удалась! Перенаправляю...';
+        resultDiv.className = 'mt-4 text-center text-green-600';
+
+        // Убираем форму
         form.remove();
+
         setTimeout(() => {
-          window.location.href = 'index.html';
+          window.location.href = 'main.html';
         }, 800);
+
+      } else if (res.status === 409) {
+        // Email занят
+        resultDiv.textContent = 'Этот email уже используется.';
+        resultDiv.className = 'mt-4 text-center text-red-600';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Зарегистрироваться';
+
       } else {
-        message.textContent = data.message || 'Ошибка регистрации';
-        message.style.color = '#ff6b6b';
+        // Другие ошибки
+        resultDiv.textContent = 'Ошибка регистрации: ' + (data.message || res.status);
+        resultDiv.className = 'mt-4 text-center text-red-600';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Зарегистрироваться';
       }
-    } catch {
-      message.textContent = 'Сервер не отвечает';
-      message.style.color = '#ff6b6b';
+
+    } catch (err) {
+      resultDiv.textContent = 'Сервер недоступен.';
+      resultDiv.className = 'mt-4 text-center text-red-600';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Зарегистрироваться';
+      console.error(err);
     }
   });
+</script>
 </script>
 </body>
 </html>

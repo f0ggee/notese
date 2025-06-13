@@ -5,13 +5,12 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"net/http"
 )
 
 type LoginHandler struct {
-	DB *pgxpool.Pool
+	DB *sql.DB
 }
 
 type HandlerRegister struct {
@@ -32,30 +31,29 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Импорты для работы
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
-
 	err = json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	var exists bool
+	var id int
 
-	err = d.DB.QueryRow(ctx, "SELECT exists(SELECT 2 FROM person WHERE email=$1 and password=$2)", p.Email, p.Password).Scan(&exists)
+	err = d.DB.QueryRow(`SELECT  id FROM person WHERE email = $1 AND password = $2`, p.Email, p.Password).Scan(&id)
 	switch {
 	case err == context.DeadlineExceeded:
 		http.Error(w, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
 		slog.Info("func login1:timed out")
 		return
 
+	case err == sql.ErrNoRows:
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		slog.Info("func login2:no rows", err)
+		return
+
 	case err != nil:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		slog.Info("func login3:no rows", err)
-		return
-
-	case !exists:
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		slog.Info("func login4:no rows", err)
 		return
 
 	default:
@@ -76,12 +74,12 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Name:     "token",
 		Value:    cookie,
 		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: false,
-		Secure:   true,
+		MaxAge:   4000,
+		HttpOnly: true,
+		Secure:   false,
 	})
 
-	_, err = d.DB.Exec(ctx, "UPDATE person SET session_id = $1  WHERE email = $2", cookie, p.Email)
+	_, err = d.DB.ExecContext(ctx, "UPDATE person SET cookie = $1  WHERE id = $2", cookie, id)
 
 	switch {
 	case err == context.DeadlineExceeded:
