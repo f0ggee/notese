@@ -46,6 +46,7 @@ func main() {
 	profileHandler := &cmd.ProfileHandler{DB: db}
 	registerHandler := &cmd.RegisterHandler{DB: db}
 	addNotesHandler := &cmd.AddNotesHandler{DB: db}
+	slog.Info("f")
 
 	http.HandleFunc("/addnotes/api", addNotesHandler.NewAddNotesCmd)
 
