@@ -20,7 +20,7 @@ type AddNotesResponse struct {
 	Content string `json:"content"`
 }
 
-func (e *AddNotesHandler) NewAddNotesCmd(w http.ResponseWriter, r *http.Request) {
+func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "", http.StatusMethodNotAllowed)
 		slog.Info("func addnotes1:")

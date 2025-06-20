@@ -14,7 +14,7 @@ type ProfileHandler struct {
 	DB *sql.DB
 }
 
-func (e *ProfileHandler) Profile(w http.ResponseWriter, r *http.Request) {
+func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		log.Printf("func profile: Method not allowed")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

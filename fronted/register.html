@@ -24,7 +24,10 @@
       max-width: 350px;
       text-align: center;
     }
-    h1 { margin-bottom: 1.5rem; font-size: 1.8rem; }
+    h1 {
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
     form input {
       width: 100%;
       padding: 12px 16px;
@@ -50,7 +53,9 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-    button:hover { background: #6366f1; }
+    button:hover {
+      background: #6366f1;
+    }
     #message {
       margin-top: 1rem;
       font-size: 0.9rem;
@@ -76,9 +81,8 @@
 
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    const resultDiv = document.getElementById('result');
+    const message = document.getElementById('message');
 
-    // Блокируем кнопку и меняем текст
     submitBtn.disabled = true;
     submitBtn.textContent = 'Обработка...';
 
@@ -89,51 +93,40 @@
     };
 
     try {
-      const res = await fetch('register/api', {
+      const res = await fetch('/register/api', {
         method: 'POST',
-        credentials: 'include',              // чтобы установить куки сразу после регистрации
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       const data = await res.json();
 
       if (res.ok) {
-        // Устанавливаем флаг и показываем успех
         localStorage.setItem('isLoggedIn', 'true');
-        resultDiv.textContent = 'Регистрация удалась! Перенаправляю...';
-        resultDiv.className = 'mt-4 text-center text-green-600';
+        message.textContent = 'Регистрация удалась! Перенаправляю...';
+        message.style.color = 'lightgreen';
+        window.location.href = '/main';
 
-        // Убираем форму
         form.remove();
 
-        setTimeout(() => {
-          window.location.href = 'main.html';
-        }, 800);
-
+      
       } else if (res.status === 409) {
-        // Email занят
-        resultDiv.textContent = 'Этот email уже используется.';
-        resultDiv.className = 'mt-4 text-center text-red-600';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Зарегистрироваться';
-
+        message.textContent = 'Этот email уже используется.';
+        message.style.color = '#ff6b6b';
       } else {
-        // Другие ошибки
-        resultDiv.textContent = 'Ошибка регистрации: ' + (data.message || res.status);
-        resultDiv.className = 'mt-4 text-center text-red-600';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Зарегистрироваться';
+        message.textContent = 'Ошибка регистрации: ' + (data.message || res.status);
+        message.style.color = '#ff6b6b';
       }
-
     } catch (err) {
-      resultDiv.textContent = 'Сервер недоступен.';
-      resultDiv.className = 'mt-4 text-center text-red-600';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Зарегистрироваться';
       console.error(err);
+      message.textContent = 'Сервер недоступен.';
+      message.style.color = '#ff6b6b';
     }
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Зарегистрироваться';
   });
-</script>
 </script>
 </body>
 </html>

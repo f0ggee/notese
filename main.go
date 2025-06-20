@@ -2,9 +2,12 @@ package main
 
 import (
 	"Project2/cmd"
+	"Project2/iteranal"
+	_ "embed"
 	"github.com/joho/godotenv"
 	"log/slog"
 
+	"github.com/gorilla/mux"
 	_ "github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	_ "log/slog"
@@ -16,19 +19,28 @@ import (
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
 
 func main() {
+	router := mux.NewRouter()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			http.ServeFile(w, r, "fronted/index.html")
 			return
 		}
 		http.ServeFile(w, r, "./fronted"+r.URL.Path)
 	})
-	http.HandleFunc("/add_notes", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/add_notes", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "fronted/addnotes.html")
 	})
-	http.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "fronted/profile.html")
+	})
+	router.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "fronted/register.html")
+
+	})
+
+	router.HandleFunc("/main", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "fronted/main.html")
 	})
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -42,17 +54,20 @@ func main() {
 		return
 	}
 
-	loginHandler := &cmd.LoginHandler{DB: db}
-	profileHandler := &cmd.ProfileHandler{DB: db}
-	registerHandler := &cmd.RegisterHandler{DB: db}
-	addNotesHandler := &cmd.AddNotesHandler{DB: db}
-	slog.Info("f")
+	loginhandler := &cmd.LoginHandler{DB: db}
+	registerhandler := &cmd.RegisterHandler{DB: db}
+	profilehandler := &cmd.ProfileHandler{DB: db}
+	addnoteshandler := &cmd.AddNotesHandler{DB: db}
 
-	http.HandleFunc("/addnotes/api", addNotesHandler.NewAddNotesCmd)
+	loging := iteranal.Mildwary
 
-	http.HandleFunc("/register/api", registerHandler.Register)
-	http.HandleFunc("/profile/api", profileHandler.Profile)
-	http.HandleFunc("/login/api", loginHandler.Login)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	router.HandleFunc("/addnotes/api", addnoteshandler.ServeHTTP).Methods("POST")
+
+	router.HandleFunc("/register/api", registerhandler.Register).Methods("POST")
+	handler := loging(router)
+
+	router.HandleFunc("/profile/api", profilehandler.ServeHTTP).Methods("GET")
+	router.HandleFunc("/login/api", loginhandler.Login).Methods("POST")
+	log.Fatal(http.ListenAndServe(":8080", handler))
 
 }

@@ -39,7 +39,7 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var id int
 
-	err = d.DB.QueryRow(`SELECT  id FROM person WHERE email = $1 AND password = $2`, p.Email, p.Password).Scan(&id)
+	err = d.DB.QueryRowContext(ctx, `SELECT  id FROM person WHERE email = $1 AND password = $2`, p.Email, p.Password).Scan(&id)
 	switch {
 	case err == context.DeadlineExceeded:
 		http.Error(w, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)

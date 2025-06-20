@@ -120,7 +120,7 @@
 
 
     addNoteBtn.addEventListener('click',() => {
-        window.location.href = 'addnotes.html'
+        window.location.href = '/add_notes'
     })
 
     if (isLoggedIn) {
@@ -141,7 +141,7 @@
     });
 
     profileBtn.addEventListener('click', () => {
-        window.location.href = 'profile.html';
+        window.location.href = '/profile';
     });
 
     console.log('isLoggedIn:', localStorage.getItem('isLoggedIn'));

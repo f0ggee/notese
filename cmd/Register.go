@@ -6,8 +6,10 @@ import (
 	_ "crypto/rand"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type RegisterHandler struct {
@@ -22,6 +24,11 @@ type Person struct {
 
 func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != "POST" {
+		http.Error(w, "Only GET method is supported.", http.StatusMethodNotAllowed)
+		return
+
+	}
 	var err error
 	var person *Person
 
@@ -30,11 +37,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	if r.Method != "POST" {
-		http.Error(w, "Only GET method is supported.", http.StatusMethodNotAllowed)
-		return
-
-	}
+	slog.Info("fffff")
 
 	if err = json.NewDecoder(r.Body).Decode(&person); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -42,77 +45,75 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var exits bool
+	if !strings.Contains(person.Email, "@") {
+		http.Error(w, "Person name must contain @", http.StatusBadRequest)
+		slog.Info("Func register2:", err)
+		return
+	}
 
-	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS(select 1 FROM person WHERE email = $1)", person.Email).Scan(&exits)
+	var existingPerson bool
+
+	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS (select 1 FROM person WHERE email=$1)", person.Email).Scan(&existingPerson)
 	///проверка на валидность запроса
 
 	if err == context.DeadlineExceeded {
-		slog.Info("Func register2:", err)
-		http.Error(w, "Timed out", http.StatusRequestTimeout)
+
+		slog.Error("Func register2:", err)
+		http.Error(w, "Timeout exceeded.", http.StatusRequestTimeout)
 		return
-	} else if err == sql.ErrNoRows {
+	} else if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		slog.Info("Func register3:", err)
-		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		slog.Info("Func register4:", err)
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if existingPerson {
+		http.Error(w, "person already exists", http.StatusConflict)
+		slog.Info("Func register5:", err)
 		return
 	}
 	////
-
-	if exits {
-		slog.Info("Func register5:person already exists")
-		http.Error(w, "Person already exists", http.StatusConflict)
-		return
-
-	}
 
 	var userid int64
 
 	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
 
-	switch {
-	case err == context.DeadlineExceeded:
-		http.Error(w, "Timeout trying to register a person", http.StatusRequestTimeout)
+	if errors.Is(err, context.DeadlineExceeded) {
+		http.Error(w, err.Error(), http.StatusRequestTimeout)
 		slog.Info("Func register6:", err)
 		return
-
-	case err == sql.ErrNoRows:
+	} else if errors.Is(err, sql.ErrNoRows) {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		slog.Info("Func register7:", err)
-		http.Error(w, "Person already exists", http.StatusUnauthorized)
 		return
-
-	case err != nil:
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else if err != nil {
 		slog.Info("Func register8:", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-
 	}
+
 	id := iteranal.Generateid()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		slog.Info("Func register9:", err)
 		return
 	}
+	slog.Info("Func register11112212")
 
 	//expires := time.Now().Add(time.Hour * 24)
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "token",
-		Value:    "id",
+		Value:    id,
 		Path:     "/",
 		MaxAge:   3600,
 		HttpOnly: false,
 		Secure:   false,
 	})
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		slog.Info("Func register10:", err)
-		return
-	}
 
 	_, err = e.DB.ExecContext(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
 	switch {
@@ -142,6 +143,9 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(mape)
+	if err := json.NewEncoder(w).Encode(mape); err != nil {
+		slog.Error("Func register14:", err)
+		return
+	}
 
 }
