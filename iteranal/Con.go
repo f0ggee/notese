@@ -2,10 +2,13 @@ package iteranal
 
 import (
 	"context"
-	"crypto/rand"
+	"strconv"
+
 	"encoding/hex"
-	"fmt"
 	"log/slog"
+
+	"math/rand"
+	rand2 "math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -27,11 +30,12 @@ func Mildwary(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		fmt.Printf("ip:%s\n", GetClientIP(r))
-		fmt.Printf("Method %s\n", r.Method)
-		fmt.Printf("URL %s\n", r.URL)
+		//fmt.Printf("ip:%s\n", GetClientIP(r))
+		//fmt.Printf("Method %s\n", r.Method)
+		//fmt.Printf("URL %s\n", r.URL)
 
 		next.ServeHTTP(w, r)
+
 	})
 }
 
@@ -50,5 +54,16 @@ func Generateid() string {
 
 	}
 	return hex.EncodeToString(b)
+
+}
+
+func Num() string {
+
+	rand2.Seed(time.Now().UnixNano())
+
+	random := rand.Intn(1000) + 9000
+	r := strconv.Itoa(random)
+
+	return r
 
 }

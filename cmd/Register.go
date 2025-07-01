@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/sessions"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -105,15 +106,28 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	slog.Info("Func register11112212")
 
 	//expires := time.Now().Add(time.Hour * 24)
+	session, err := store.Get(r, "token1")
+	if err != nil {
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    id,
+		slog.Error("Cookie don't set")
+		http.Error(w, "cokie don't set", http.StatusUnauthorized)
+		return
+	}
+
+	session.Values["cookie"] = id
+
+	session.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   3600,
-		HttpOnly: false,
+		MaxAge:   3000,
 		Secure:   false,
-	})
+		HttpOnly: true,
+	}
+
+	if err := session.Save(r, w); err != nil {
+		slog.Error("Cokie can't send", err)
+		return
+
+	}
 
 	_, err = e.DB.ExecContext(ctx, "UPDATE person Set cookie = $1 WHERE id = $2", id, userid)
 	switch {

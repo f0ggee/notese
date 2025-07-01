@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Подтверждение кода</title>
+    <style>
+        body.dark-theme{background:#121212;color:#fff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
+        .container{background:#1e1e1e;padding:2rem;border-radius:16px;box-shadow:0 0 20px rgba(255,255,255,.05);width:100%;max-width:350px;text-align:center;}
+        h1{margin-bottom:1.5rem;font-size:1.8rem;}
+        .code-container{margin-bottom:1rem;}
+        .code-input{width:100%;height:60px;font-size:1.5rem;text-align:center;border:none;border-radius:8px;background:#2b2b2b;color:#fff;letter-spacing:.3em;}
+        .code-input:focus{outline:2px solid #4f46e5;background:#333;}
+        button{width:100%;padding:12px;border:none;border-radius:8px;background:#4f46e5;color:#fff;font-size:1rem;cursor:pointer;transition:background .3s;}
+        button:disabled{opacity:.6;cursor:default;}
+        button:hover:enabled{background:#6366f1;}
+        #message{margin-top:1rem;font-size:.9rem;height:1.2rem;}
+    </style>
+</head>
+<body class="dark-theme">
+<div class="container">
+    <h1>Введите код</h1>
+    <form id="codeForm" autocomplete="off" novalidate>
+        <div class="code-container">
+            <input type="text"
+                   inputmode="numeric"
+                   pattern="\d{4}"
+                   maxlength="4"
+                   class="code-input"
+                   id="code12"
+                   name="code12"
+                   required />
+        </div>
+        <button type="submit" id="submitBtn">Подтвердить</button>
+        <p id="message"></p>
+    </form>
+</div>
+
+<script>
+    const API_BASE = '/securest/api';
+
+    (async () => {
+        try {
+            const res = await fetch(API_BASE, {method:'GET',credentials:'include'});
+            if (res.ok) {
+                const data = await res.json();
+                if (data.twofaEnabled) {
+                    location.href = '/success';
+                }
+            }
+        } catch(e){console.error(e);}
+    })();
+
+    const form      = document.getElementById('codeForm');
+    const codeInput = document.getElementById('code12');
+    const submitBtn = document.getElementById('submitBtn');
+    const message   = document.getElementById('message');
+
+    codeInput.addEventListener('input', () => {
+        codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        message.textContent = '';
+
+        const code = codeInput.value.trim();
+        if (!/^\d{4}$/.test(code)) {
+            message.textContent = 'Пожалуйста, введите 4 цифры';
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Проверка...';
+
+        try {
+            const res = await fetch(API_BASE, {
+                method:'POST',
+                credentials:'include',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({code})
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                location.href = '/success';
+            } else if (res.ok) {
+                message.style.color='#ff6b6b';
+                message.textContent = data.message || `Неверный код. Попыток осталось: ${data.attemptsLeft ?? '—'}`;
+            } else {
+                message.style.color='#ff6b6b';
+                message.textContent = data.message || `Ошибка: ${res.status}`;
+            }
+        } catch(err){
+            console.error(err);
+            message.style.color='#ff6b6b';
+            message.textContent = 'Сервер недоступен.';
+        } finally{
+            submitBtn.disabled=false;
+            submitBtn.textContent='Подтвердить';
+        }
+    });
+
+    codeInput.focus();
+</script>
+</body>
+</html>

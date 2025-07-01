@@ -43,14 +43,22 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	cookie, err := r.Cookie("token")
+	session, err := store.Get(r, "token1")
 	if err != nil {
-		slog.Info("func addnotes3:", err)
+		slog.Error("cookie don't send", err)
 		return
 	}
+
+	uuidid, ok := session.Values["token2"]
+	if !ok {
+		slog.Error("dont get")
+		return
+
+	}
+
 	var id string
 
-	err = e.DB.QueryRowContext(ctx, "INSERT INTO notes(title, created_at, content, author_cookie) values ($1,$2,$3,$4) RETURNING  id", b.Title, parsedtime, b.Content, cookie.Value).Scan(&id)
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO notes(title, created_at, content, author_cookie) values ($1,$2,$3,$4) RETURNING  id", b.Title, parsedtime, b.Content, uuidid).Scan(&id)
 
 	if err == context.DeadlineExceeded || err == context.Canceled {
 		http.Error(w, "", http.StatusRequestTimeout)

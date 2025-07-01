@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Профиль</title>
+  <title>Настройки</title>
   <style>
     body.dark-theme {
       background: #121212;
@@ -23,7 +22,7 @@
     .username {
       font-size: 1rem;
     }
-    .logout-btn, .settings-btn {
+    .logout-btn, .settings-btn, .option-btn {
       padding: 8px 16px;
       border: none;
       border-radius: 8px;
@@ -33,11 +32,13 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-    .logout-btn:hover, .settings-btn:hover {
+    .logout-btn:hover, .settings-btn:hover, .option-btn:hover {
       background: #6366f1;
     }
     main {
       display: flex;
+      flex-direction: column;
+      gap: 2rem;
       justify-content: center;
       align-items: center;
       height: calc(100vh - 80px);
@@ -45,21 +46,22 @@
     }
     h1 {
       font-size: 2rem;
+      margin: 0;
     }
   </style>
 </head>
 <body class="dark-theme">
 
 <header>
-  <div class="username" id="userName">Привет, пользователь</div>
+  <div class="username" id="userName">Пользователь</div>
   <div>
-    <button class="settings-btn" id="settingsBtn">Настройки</button>
     <button class="logout-btn" id="logoutBtn">Выйти</button>
   </div>
 </header>
 
 <main>
-  <h1>Добро пожаловать в NotesApp</h1>
+  <h1>Настройки</h1>
+  <button class="option-btn" id="twofaBtn">Двухфакторная аутентификация</button>
 </main>
 
 <script>
@@ -67,39 +69,29 @@
     window.location.href = '/login.html';
   }
 
-  const userNameDiv = document.getElementById('userName');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const settingsBtn = document.getElementById('settingsBtn');
-
+  // Загрузка имени пользователя
   async function loadProfile() {
     try {
       const res = await fetch('/profile/api');
       if (!res.ok) throw new Error('Ошибка загрузки профиля');
       const data = await res.json();
-
       const name = data.name || 'Пользователь';
-      if (userNameDiv) {
-        userNameDiv.textContent = `Привет, ${name}`;
-      }
-
+      document.getElementById('userName').textContent = `Привет, ${name}`;
     } catch (err) {
-      console.error('Ошибка запроса к /profile/api:', err);
-      if (userNameDiv) {
-        userNameDiv.textContent = 'Ошибка загрузки имени';
-      }
+      console.error(err);
+      document.getElementById('userName').textContent = 'Ошибка';
     }
   }
-
   loadProfile();
 
-  logoutBtn.addEventListener('click', () => {
+  document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem('username');
     localStorage.removeItem('isLoggedIn');
     window.location.href = '/';
   });
 
-  settingsBtn.addEventListener('click', () => {
-    window.location.href = '/setting';
+  document.getElementById('twofaBtn').addEventListener('click', () => {
+    window.location.href = '/two_check';
   });
 </script>
 

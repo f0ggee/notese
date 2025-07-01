@@ -24,17 +24,22 @@ func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	cookie, err := r.Cookie("token")
+	session, err := store.Get(r, "token1")
 	if err != nil {
-		log.Println("Func profile1:failed to connetct", err)
-		http.Error(w, "Cookie not found", http.StatusUnauthorized)
+		slog.Error("cookie don't send", err)
 		return
 	}
-	log.Printf("cookie cookie:%v", cookie)
+
+	uuidid, ok := session.Values["cookie"]
+	if !ok {
+		slog.Error("dont get")
+		return
+
+	}
 
 	var name string
 	var id int64
-	err1 := e.DB.QueryRowContext(ctx, "SELECT name,id FROM person WHERE cookie = $1 LIMIT 1 ", cookie.Value).Scan(&name, &id)
+	err1 := e.DB.QueryRowContext(ctx, "SELECT name,id FROM person WHERE cookie = $1 LIMIT 1 ", uuidid).Scan(&name, &id)
 
 	if err1 == context.DeadlineExceeded {
 		slog.Info("Func profile1:deadline exceeded")
