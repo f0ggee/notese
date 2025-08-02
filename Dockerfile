@@ -5,19 +5,25 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-COPY fronted/ .
-COPY iteranal/ .
-COPY cmd /.
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /main main.go
+COPY fronted ./fronted
+COPY cmd ./cmd
+COPY iteranal ./iteranal
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app ./
+
+
+
 
 
 FROM alpine:latest
+
 WORKDIR /app
-COPY --from=builder /main  /app/main
-COPY --from=builder /build/fronted  /app/fronted
+COPY --from=builder /build/app .
+COPY --from=builder /build/fronted ./fronted
+COPY --from=builder /build/cmd ./cmd
 
-COPY .env  /app/.env
-ENV DATABASE_URL=postgresql://postgres.swlbbzzazbagtprtcmgz:xokmix-tugweS-baqpa5@aws-0-eu-north-1.pooler.supabase.com:6543/postgres
+COPY .env .env
+EXPOSE 443
 
-EXPOSE 8080
-CMD ["/app/main"]
+
+
+CMD ["./app"]

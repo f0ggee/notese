@@ -2,6 +2,8 @@ package iteranal
 
 import (
 	"context"
+	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 	"strconv"
 
 	"encoding/hex"
@@ -13,6 +15,8 @@ import (
 	"strings"
 	"time"
 )
+
+var store = sessions.NewCookieStore([]byte("KEY"))
 
 func GetClientIP(r *http.Request) string {
 	// Try getting IP from X-Forwarded-For header
@@ -33,6 +37,12 @@ func Mildwary(next http.Handler) http.Handler {
 		//fmt.Printf("ip:%s\n", GetClientIP(r))
 		//fmt.Printf("Method %s\n", r.Method)
 		//fmt.Printf("URL %s\n", r.URL)
+
+		_, err := store.Get(r, "token1")
+		if err != nil {
+			slog.Error("Cookie dont set")
+			return
+		}
 
 		next.ServeHTTP(w, r)
 
@@ -66,4 +76,16 @@ func Num() string {
 
 	return r
 
+}
+
+func HashPassowrd(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	return string(bytes), err
+
+}
+
+func CheckPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+
+	return err == nil
 }

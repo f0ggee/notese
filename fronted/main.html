@@ -5,18 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Главная</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body.dark-theme {
             background-color: #121212;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            padding: 0;
         }
+
         header {
             display: flex;
             justify-content: flex-end;
+            flex-wrap: wrap;
             gap: 0.75rem;
             padding: 1rem 2rem;
         }
+
         .header-btn {
             padding: 8px 16px;
             border: none;
@@ -27,24 +35,38 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
-        .header-btn:hover { background-color: #6366f1; }
+
+        .header-btn:hover {
+            background-color: #6366f1;
+        }
+
         main {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
+            padding: 2rem 1rem;
             text-align: center;
         }
+
         .instruction {
-            max-width: 600px;
+            max-width: 700px;
             font-size: 1.1rem;
-            line-height: 1.5;
+            line-height: 1.6;
+            margin-bottom: 2rem;
         }
+
+        .instruction h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
         footer {
-            padding: 2rem;
+            padding: 2rem 1rem;
             display: flex;
             justify-content: center;
         }
+
         #addNoteBtn {
             padding: 12px 24px;
             border: none;
@@ -55,23 +77,62 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
+
         #addNoteBtn:hover {
             background-color: #6366f1;
         }
+
         section.more-info {
-            padding: 3rem 2rem;
+            padding: 3rem 1.5rem;
             background-color: #1e1e1e;
         }
+
         section.more-info h2 {
             font-size: 1.5rem;
             margin-bottom: 1rem;
+            text-align: center;
         }
+
         section.more-info p {
             max-width: 700px;
             margin: 0 auto;
             font-size: 1rem;
             line-height: 1.6;
             text-align: justify;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                justify-content: center;
+                padding: 1rem;
+            }
+
+            .header-btn {
+                flex: 1 1 auto;
+                font-size: 0.85rem;
+                padding: 10px 12px;
+            }
+
+            .instruction h1 {
+                font-size: 1.6rem;
+            }
+
+            .instruction {
+                font-size: 1rem;
+            }
+
+            #addNoteBtn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            section.more-info h2 {
+                font-size: 1.3rem;
+            }
+
+            section.more-info {
+                padding: 2rem 1rem;
+            }
         }
     </style>
 </head>
@@ -88,8 +149,8 @@
         <h1>Добро пожаловать в NotesApp</h1>
         <p>
             Здесь вы можете сохранять свои мысли и идеи, добавлять новые заметки,
-            редактировать и удалять их в любое время.
-            Всё хранится в вашем личном кабинете, доступном только вам.
+            редактировать и удалять их в любое время. Всё хранится в вашем личном
+            кабинете, доступном только вам.
         </p>
     </div>
 </main>
@@ -117,12 +178,6 @@
     const profileBtn = document.getElementById('profileBtn');
     const addNoteBtn = document.getElementById('addNoteBtn');
 
-
-
-    addNoteBtn.addEventListener('click',() => {
-        window.location.href = '/add_notes'
-    })
-
     if (isLoggedIn) {
         loginBtn.style.display = 'none';
         registerBtn.style.display = 'none';
@@ -133,18 +188,20 @@
     }
 
     loginBtn.addEventListener('click', () => {
-        window.location.href = 'index.html'; // страница входа
+        window.location.href = 'index.html';
     });
 
     registerBtn.addEventListener('click', () => {
-        window.location.href = 'register.html'; // страница регистрации
+        window.location.href = 'register.html';
     });
 
     profileBtn.addEventListener('click', () => {
         window.location.href = '/profile';
     });
 
-    console.log('isLoggedIn:', localStorage.getItem('isLoggedIn'));
+    addNoteBtn.addEventListener('click', () => {
+        window.location.href = '/add_notes';
+    });
 </script>
 
 </body>

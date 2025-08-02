@@ -1,97 +1,89 @@
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Настройки</title>
   <style>
-    body.dark-theme {
-      background: #121212;
-      color: #fff;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0; padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
+      background: #121212; color: #ffffff;
     }
+
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #1e1e1e;
-      padding: 1rem 2rem;
-      box-shadow: 0 0 10px rgba(255,255,255,0.05);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+      background: #1e1e1e; padding: 1rem 2rem; box-shadow: 0 0 10px rgba(255,255,255,0.05);
     }
-    .username {
-      font-size: 1rem;
-    }
-    .logout-btn, .settings-btn, .option-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background: #4f46e5;
-      color: #fff;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-    .logout-btn:hover, .settings-btn:hover, .option-btn:hover {
-      background: #6366f1;
-    }
+    .username { font-size: 1rem; }
+
     main {
-      display: flex;
-      flex-direction: column;
-      gap: 2rem;
-      justify-content: center;
-      align-items: center;
-      height: calc(100vh - 80px);
-      text-align: center;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      padding: 2rem 1rem; min-height: calc(100vh - 80px); text-align: center;
     }
-    h1 {
-      font-size: 2rem;
-      margin: 0;
+    h1 { font-size: 2rem; margin-bottom: 1.25rem; }
+
+    .btn {
+      padding: 12px 18px; border: 0; border-radius: 10px;
+      background: #4f46e5; color: #fff; cursor: pointer; font-size: 1rem;
+      transition: background .25s;
+    }
+    .btn:hover { background: #6366f1; }
+
+    .status { margin-top: 1rem; min-height: 1.25rem; font-size: .95rem; color: #bbbbbb; }
+
+    @media (max-width: 500px) {
+      header { flex-direction: column; align-items: flex-start; padding: 1rem; }
+      .username { margin-bottom: .5rem; }
+      .btn { width: 100%; }
     }
   </style>
 </head>
-<body class="dark-theme">
+<body>
 
 <header>
   <div class="username" id="userName">Пользователь</div>
   <div>
-    <button class="logout-btn" id="logoutBtn">Выйти</button>
+    <button class="btn" id="logoutBtn">Выйти</button>
   </div>
 </header>
 
 <main>
   <h1>Настройки</h1>
-  <button class="option-btn" id="twofaBtn">Двухфакторная аутентификация</button>
+  <button class="btn" id="openThemeJsonBtn">Выбор темы (JSON)</button>
+  <div class="status" id="status"></div>
 </main>
 
 <script>
+  // Редирект, если не авторизован
   if (localStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = '/login.html';
   }
 
-  // Загрузка имени пользователя
-  async function loadProfile() {
+  // Приветствие
+  (async function loadProfile() {
     try {
-      const res = await fetch('/profile/api');
-      if (!res.ok) throw new Error('Ошибка загрузки профиля');
-      const data = await res.json();
-      const name = data.name || 'Пользователь';
-      document.getElementById('userName').textContent = `Привет, ${name}`;
-    } catch (err) {
-      console.error(err);
-      document.getElementById('userName').textContent = 'Ошибка';
+      const r = await fetch('/profile/api', { credentials: 'include' });
+      if (!r.ok) throw new Error();
+      const d = await r.json();
+      document.getElementById('userName').textContent = `Привет, ${d?.name || 'Пользователь'}`;
+    } catch {
+      document.getElementById('userName').textContent = 'Привет';
     }
-  }
-  loadProfile();
+  })();
 
+  // Выход
   document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem('username');
     localStorage.removeItem('isLoggedIn');
     window.location.href = '/';
   });
 
-  document.getElementById('twofaBtn').addEventListener('click', () => {
-    window.location.href = '/two_check';
+  // Клик по кнопке "Выбор темы": сразу редирект на /setting/chose
+  document.getElementById('openThemeJsonBtn').addEventListener('click', () => {
+    window.location.href = '/chose';
   });
 </script>
 

@@ -58,11 +58,15 @@ func main() {
 	router.HandleFunc("/setting", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "fronted/setting.html")
 	})
-	err := godotenv.Load("./cmd/.env")
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("Ошибка загрузки .env файла")
+		log.Fatal("Ошибка загрузки .env файла", err)
 
 	}
+
+	router.HandleFunc("/chose", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "fronted/chosetheme.html")
+	})
 
 	db, err := cmd.Connect()
 	if db == nil {
@@ -76,6 +80,9 @@ func main() {
 	addnoteshandler := &cmd.AddNotesHandler{DB: db}
 	securehandler := &cmd.SecureHandler{DB: db}
 	securesethandler := &cmd.SecureSethandler{DB: db}
+
+	theme := &cmd.Themestruch{}
+
 	loging := iteranal.Mildwary
 	handler := loging(router)
 
@@ -83,10 +90,11 @@ func main() {
 
 	router.HandleFunc("/register/api", registerhandler.Register).Methods("POST")
 	router.HandleFunc("/securest/api", securesethandler.Secure_set).Methods("POST")
+	router.HandleFunc("/chose/api", cmd.Theme(theme)).Methods("POST")
 
 	router.HandleFunc("/secure/api", securehandler.Secure).Methods("POST")
 	router.HandleFunc("/profile/api", profilehandler.ServeHTTP).Methods("GET")
 	router.HandleFunc("/login/api", loginhandler.Login).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", handler))
 
+	log.Fatal(http.ListenAndServe("localhost:8080", handler))
 }

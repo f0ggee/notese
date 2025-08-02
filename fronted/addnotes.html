@@ -5,33 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Добавить заметку</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body.dark-theme {
       background-color: #121212;
       color: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
-      padding: 2rem;
+      padding: 1rem;
     }
 
     h1 {
       text-align: center;
       margin-bottom: 2rem;
+      font-size: 1.75rem;
     }
 
     form {
+      width: 100%;
       max-width: 600px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
+      padding: 1rem;
+      background-color: #1a1a1a;
+      border-radius: 12px;
     }
 
     label {
       font-size: 1rem;
       margin-bottom: 0.5rem;
+      display: inline-block;
     }
 
     input, textarea {
+      width: 100%;
       padding: 10px 14px;
       border: none;
       border-radius: 8px;
@@ -63,6 +74,22 @@
 
     button:hover {
       background-color: #6366f1;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.4rem;
+      }
+
+      form {
+        padding: 1rem 0.5rem;
+        border-radius: 8px;
+      }
+
+      button {
+        width: 100%;
+        align-self: center;
+      }
     }
   </style>
 </head>
@@ -108,13 +135,22 @@
         body: JSON.stringify(note)
       });
 
+      if (response.status === 401) {
+        alert('Сессия истекла. Пожалуйста, войдите снова.');
+        localStorage.removeItem('username');
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = '/login.html';
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Ошибка при отправке: ' + response.statusText);
       }
 
       const result = await response.json();
       alert('Заметка успешно добавлена!');
-      window.location.href = '/main'; // редирект на главную страницу
+      window.location.href = '/main';
+
     } catch (err) {
       console.error('Ошибка:', err);
       alert('Не удалось добавить заметку');

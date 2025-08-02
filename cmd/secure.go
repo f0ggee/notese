@@ -37,6 +37,8 @@ func (h *SecureHandler) Secure(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "token1")
 	if err != nil {
 		slog.Error("cookie don't send", err)
+		http.Error(w, "Cookie dont set", http.StatusUnauthorized)
+
 		return
 	}
 
@@ -72,7 +74,6 @@ func (h *SecureHandler) Secure(w http.ResponseWriter, r *http.Request) {
 
 		slog.Info("secure is set")
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"twofaEnabled": true,

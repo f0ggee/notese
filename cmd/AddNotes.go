@@ -46,10 +46,11 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "token1")
 	if err != nil {
 		slog.Error("cookie don't send", err)
+		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
 		return
 	}
 
-	uuidid, ok := session.Values["token2"]
+	uuidid, ok := session.Values["cookie"]
 	if !ok {
 		slog.Error("dont get")
 		return

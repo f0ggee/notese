@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"github.com/gorilla/sessions"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 	"net/http"
 )
@@ -19,7 +21,35 @@ type HandlerRegister struct {
 	Password string `json:"password"`
 }
 
+func chekcpasswor(hash string, password string) bool {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err == nil {
+		return true
+	}
+	return false
+
+}
+
 var store = sessions.NewCookieStore([]byte("KEY"))
+
+func parse(r *http.Request) (*HandlerRegister, error) {
+	var err error
+	logger := zap.Must(zap.NewProduction())
+	defer logger.Sync()
+
+	sugar := logger.Sugar()
+
+	var jsonparse HandlerRegister
+	err = json.NewDecoder(r.Body).Decode(&jsonparse)
+	if err != nil {
+		sugar.Error(
+			"Errr", err)
+
+	}
+	defer r.Body.Close()
+	return &jsonparse, err
+}
 
 func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
@@ -29,20 +59,36 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var err error
-	var p HandlerRegister
+	logger := zap.Must(zap.NewProduction())
+	defer logger.Sync()
+	sugar := logger.Sugar()
 
 	// Импорты для работы
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
-	err = json.NewDecoder(r.Body).Decode(&p)
-	if err != nil {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-	var id int
 
-	err = d.DB.QueryRowContext(ctx, `SELECT  id FROM person WHERE email = $1 AND password = $2`, p.Email, p.Password).Scan(&id)
+	t, err := parse(r)
+	if err != nil {
+		sugar.Error(
+			"Errr", err)
+
+	}
+
+	var id int
+	var password string
+
+	err = d.DB.QueryRowContext(ctx, `SELECT  id,password  FROM person WHERE email = $1`, t.Email).Scan(&id, &password)
+	slog.Info(password)
+	ok := chekcpasswor(password, t.Password)
+
+	if !ok {
+		slog.Info("Func login dont")
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	} else {
+		slog.Info("func login check password: all okay ")
+	}
+
 	switch {
 	case err == context.DeadlineExceeded:
 		http.Error(w, http.StatusText(http.StatusRequestTimeout), http.StatusRequestTimeout)
@@ -85,7 +131,7 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	session.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   3000,
+		MaxAge:   100000,
 		Secure:   false,
 		HttpOnly: true,
 	}
@@ -110,7 +156,7 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	case err != nil:
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		slog.Info("func login8:no rows")
+		slog.Info("func login8:no rows", err)
 		return
 
 	default:

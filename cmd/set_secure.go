@@ -41,6 +41,7 @@ func (s *SecureSethandler) Secure_set(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, "token1")
 	if err != nil {
 		slog.Error("func set secure 2 : ", err)
+		http.Error(w, "Cookie dont send", http.StatusUnauthorized)
 		return
 	}
 
@@ -48,6 +49,7 @@ func (s *SecureSethandler) Secure_set(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		slog.Info("Func secure set 3: ok", ok)
 		slog.Info("code", code)
+		http.Error(w, "Cookie dont set", http.StatusUnauthorized)
 		return
 	}
 

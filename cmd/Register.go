@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/sessions"
+	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -23,10 +24,16 @@ type Person struct {
 	Password string `json:"password"`
 }
 
+func HashPassowrd(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+	return string(bytes), err
+
+}
+
 func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "POST" {
-		http.Error(w, "Only GET method is supported.", http.StatusMethodNotAllowed)
+		http.Error(w, "Only POST method is supported.", http.StatusMethodNotAllowed)
 		return
 
 	}
@@ -79,9 +86,13 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	////
 
-	var userid int64
+	f, err := HashPassowrd(person.Password)
+	if err != nil {
+		slog.Error("Error:", err)
+	}
 
-	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, person.Password).Scan(&userid)
+	var userid int
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, f).Scan(&userid)
 
 	if errors.Is(err, context.DeadlineExceeded) {
 		http.Error(w, err.Error(), http.StatusRequestTimeout)

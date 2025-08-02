@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Выбор темы</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { --bg:#121212; --text:#ffffff; --panel:#1e1e1e; --muted:#bbbbbb; --accent:#4f46e5; --accent2:#6366f1; }
+    body {
+      margin:0; padding:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:var(--bg); color:var(--text); font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .card {
+      width:100%; max-width:420px; background:var(--panel); border-radius:16px; padding:20px;
+      box-shadow:0 0 20px rgba(255,255,255,.06);
+    }
+    h1 { margin:0 0 12px; font-size:1.6rem; }
+    p { margin:0 0 16px; color:var(--muted); }
+    .options { display:flex; gap:12px; margin:10px 0 16px; }
+    .opt {
+      flex:1; padding:12px; border-radius:10px; border:1px solid transparent; cursor:pointer; text-align:center;
+      background:#2b2b2b; user-select:none;
+    }
+    .opt[aria-checked="true"] { outline:2px solid var(--accent); border-color:var(--accent); }
+    .actions { display:flex; gap:10px; }
+    button {
+      flex:1; padding:12px; border:0; border-radius:10px; cursor:pointer; font-size:1rem;
+      background:var(--accent); color:#fff; transition:background .2s;
+    }
+    button:hover { background:var(--accent2); }
+    button[disabled] { opacity:.6; cursor:default; }
+    .status { margin-top:10px; min-height:1.2rem; font-size:.95rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="card" role="region" aria-label="Выбор темы">
+  <h1>Выбор темы</h1>
+  <p>Пожалуйста, выберите тему интерфейса.</p>
+
+  <div class="options" role="radiogroup" aria-label="Тема">
+    <div class="opt" id="optDark" role="radio" aria-checked="true" tabindex="0" data-value="black">Темная</div>
+    <div class="opt" id="optLight" role="radio" aria-checked="false" tabindex="0" data-value="white">Светлая</div>
+  </div>
+
+  <div class="actions">
+    <button id="applyBtn">Применить</button>
+  </div>
+  <div class="status" id="status" aria-live="polite"></div>
+</div>
+
+<script>
+  // Значение по умолчанию
+  let selected = 'black';
+
+  const optDark = document.getElementById('optDark');
+  const optLight = document.getElementById('optLight');
+  const applyBtn = document.getElementById('applyBtn');
+  const statusEl = document.getElementById('status');
+
+  function setSelected(value) {
+    selected = value;
+    const isDark = value === 'black';
+    optDark.setAttribute('aria-checked', String(isDark));
+    optLight.setAttribute('aria-checked', String(!isDark));
+    optDark.tabIndex = isDark ? 0 : -1;
+    optLight.tabIndex = !isDark ? 0 : -1;
+  }
+
+  function onChoose(e) {
+    const v = e.currentTarget.dataset.value;
+    setSelected(v);
+  }
+
+  // Навигация клавиатурой
+  function onKey(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onChoose(e);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      setSelected(selected === 'black' ? 'white' : 'black');
+    }
+  }
+
+  optDark.addEventListener('click', onChoose);
+  optLight.addEventListener('click', onChoose);
+  optDark.addEventListener('keydown', onKey);
+  optLight.addEventListener('keydown', onKey);
+
+  async function applyTheme() {
+    statusEl.textContent = 'Сохраняю выбор...';
+    applyBtn.disabled = true;
+
+    // Формируем JSON c ключом "json:theme"
+    const payload = { "json:theme": selected };
+
+    try {
+      const res = await fetch('/chose/api', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      // Опционально читаем ответ
+      let ok = res.ok;
+      if (!ok && res.status === 401) {
+        statusEl.textContent = 'Сессия истекла. Войдите снова.';
+        applyBtn.disabled = false;
+        return;
+      }
+      if (!ok) {
+        // Даже если сервер не вернул 200, продолжаем редирект, если это допустимо вашей логикой
+        // Иначе раскомментируйте две строки ниже:
+        // statusEl.textContent = `Не удалось сохранить (код ${res.status}).`;
+        // applyBtn.disabled = false; return;
+      }
+
+      // Успех: перенаправляем на главную
+      window.location.href = '/';
+    } catch (e) {
+      console.error(e);
+      statusEl.textContent = 'Сервер недоступен.';
+      applyBtn.disabled = false;
+    }
+  }
+
+  applyBtn.addEventListener('click', applyTheme);
+</script>
+</body>
+</html>
