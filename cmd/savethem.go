@@ -12,11 +12,16 @@ type Themestruch struct {
 
 var store = sessions.NewCookieStore([]byte("KEY"))
 
-func Theme(ea *Themestruch) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			http.Error(w, "Mehod dont allow", http.StatusBadRequest)
-			slog.Info("H")
+	defer r.Body.Close()
+
+	return &e, err
+}
+
+func Theme(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Mehod dont allow", http.StatusBadRequest)
+		slog.Info("H")
+		return
 
 		}
 
