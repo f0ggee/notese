@@ -93,8 +93,8 @@
     statusEl.textContent = 'Сохраняю выбор...';
     applyBtn.disabled = true;
 
-    // Формируем JSON c ключом "json:theme"
-    const payload = { "json:theme": selected };
+    // ИСПРАВЛЕНО: отправляем правильный ключ
+    const payload = { theme: selected };
 
     try {
       const res = await fetch('/chose/api', {
@@ -104,22 +104,14 @@
         body: JSON.stringify(payload)
       });
 
-      // Опционально читаем ответ
-      let ok = res.ok;
-      if (!ok && res.status === 401) {
+      if (res.status === 401) {
         statusEl.textContent = 'Сессия истекла. Войдите снова.';
         applyBtn.disabled = false;
         return;
       }
-      if (!ok) {
-        // Даже если сервер не вернул 200, продолжаем редирект, если это допустимо вашей логикой
-        // Иначе раскомментируйте две строки ниже:
-        // statusEl.textContent = `Не удалось сохранить (код ${res.status}).`;
-        // applyBtn.disabled = false; return;
-      }
 
-      // Успех: перенаправляем на главную
-      window.location.href = '/';
+      // На успех — редирект
+      window.location.href = '/main';
     } catch (e) {
       console.error(e);
       statusEl.textContent = 'Сервер недоступен.';

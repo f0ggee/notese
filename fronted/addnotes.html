@@ -9,12 +9,17 @@
       box-sizing: border-box;
     }
 
-    body.dark-theme {
-      background-color: #121212;
-      color: #ffffff;
+    body {
+      background-color: #ffffff;
+      color: #000000;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 1rem;
+    }
+
+    body.dark-theme {
+      background-color: #121212;
+      color: #ffffff;
     }
 
     h1 {
@@ -31,8 +36,12 @@
       flex-direction: column;
       gap: 1.5rem;
       padding: 1rem;
-      background-color: #1a1a1a;
+      background-color: #f5f5f5;
       border-radius: 12px;
+    }
+
+    body.dark-theme form {
+      background-color: #1a1a1a;
     }
 
     label {
@@ -46,9 +55,15 @@
       padding: 10px 14px;
       border: none;
       border-radius: 8px;
+      background-color: #ffffff;
+      color: #000000;
+      font-size: 1rem;
+    }
+
+    body.dark-theme input,
+    body.dark-theme textarea {
       background-color: #1e1e1e;
       color: #ffffff;
-      font-size: 1rem;
     }
 
     input:focus, textarea:focus {
@@ -93,7 +108,7 @@
     }
   </style>
 </head>
-<body class="dark-theme">
+<body>
 
 <h1>Добавить новую заметку</h1>
 
@@ -117,6 +132,25 @@
 </form>
 
 <script>
+  // Применение темы по значению theme
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }
+
+  // Получаем тему при загрузке страницы
+  fetch('/api/user/theme', { credentials: 'include' })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data && data.theme) {
+              applyTheme(data.theme);
+            }
+          })
+          .catch(() => {});
+
   document.getElementById('noteForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -132,6 +166,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(note)
       });
 
@@ -148,6 +183,12 @@
       }
 
       const result = await response.json();
+
+      // Применяем тему из ответа
+      if (result.theme) {
+        applyTheme(result.theme);
+      }
+
       alert('Заметка успешно добавлена!');
       window.location.href = '/main';
 

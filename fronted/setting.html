@@ -4,18 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Настройки</title>
-  <style>
-    * { box-sizing: border-box; }
 
-    body {
-      margin: 0; padding: 0;
+  <!-- РАННЕЕ применение сохраненной темы (во избежание FOUC) -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme'); // 'black' | 'white' | null
+        if (saved === 'black') document.documentElement.classList.add('dark-theme');
+        if (saved === 'white') document.documentElement.classList.add('light-theme');
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #121212; color: #ffffff;
+      font-weight: bold;
     }
+
+    html, body { margin: 0; padding: 0; }
+
+    /* Темы через класс на <html> */
+    .dark-theme body { background: #121212; color: #ffffff; }
+    .light-theme body { background: #ffffff; color: #000000; }
+
+    .dark-theme header { background: #1e1e1e; box-shadow: 0 0 10px rgba(255,255,255,0.05); }
+    .light-theme header { background: #f5f5f5; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
 
     header {
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
-      background: #1e1e1e; padding: 1rem 2rem; box-shadow: 0 0 10px rgba(255,255,255,0.05);
+      padding: 1rem 2rem;
     }
     .username { font-size: 1rem; }
 
@@ -23,7 +42,11 @@
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       padding: 2rem 1rem; min-height: calc(100vh - 80px); text-align: center;
     }
-    h1 { font-size: 2rem; margin-bottom: 1.25rem; }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1.25rem;
+    }
 
     .btn {
       padding: 12px 18px; border: 0; border-radius: 10px;
@@ -32,7 +55,12 @@
     }
     .btn:hover { background: #6366f1; }
 
-    .status { margin-top: 1rem; min-height: 1.25rem; font-size: .95rem; color: #bbbbbb; }
+    .status {
+      margin-top: 1rem;
+      min-height: 1.25rem;
+      font-size: .95rem;
+      color: #bbbbbb;
+    }
 
     @media (max-width: 500px) {
       header { flex-direction: column; align-items: flex-start; padding: 1rem; }
@@ -52,27 +80,66 @@
 
 <main>
   <h1>Настройки</h1>
-  <button class="btn" id="openThemeJsonBtn">Выбор темы (JSON)</button>
+  <button class="btn" id="openThemeJsonBtn">Выбор темы</button>
   <div class="status" id="status"></div>
 </main>
 
 <script>
   // Редирект, если не авторизован
   if (localStorage.getItem('isLoggedIn') !== 'true') {
-    window.location.href = '/login.html';
+    window.location.href = '/';
   }
 
   // Приветствие
   (async function loadProfile() {
     try {
-      const r = await fetch('/profile/api', { credentials: 'include' });
-      if (!r.ok) throw new Error();
+      const r = await fetch('/profile/api', { credentials: 'include', cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       const d = await r.json();
       document.getElementById('userName').textContent = `Привет, ${d?.name || 'Пользователь'}`;
     } catch {
       document.getElementById('userName').textContent = 'Привет';
     }
   })();
+
+  // Функции темы
+  function applyTheme(theme) {
+    document.documentElement.classList.remove('dark-theme', 'light-theme');
+    if (theme === 'black') document.documentElement.classList.add('dark-theme');
+    if (theme === 'white') document.documentElement.classList.add('light-theme');
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+  }
+
+  async function fetchAndApplyTheme() {
+    const status = document.getElementById('status');
+    try {
+      const r = await fetch('/setting/api', { credentials: 'include', cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+
+      const ct = (r.headers.get('content-type') || '').toLowerCase();
+      let theme;
+      if (ct.includes('application/json')) {
+        const data = await r.json();
+        theme = data && data.theme;
+      } else {
+        theme = (await r.text()).trim();
+      }
+
+      if (theme === 'black' || theme === 'white') {
+        applyTheme(theme);
+        status.textContent = '';
+      } else {
+        status.textContent = '';
+        console.warn('Неожиданный ответ темы:', theme);
+      }
+    } catch (err) {
+      status.textContent = '';
+      console.error('Ошибка загрузки темы:', err);
+    }
+  }
+
+  // Первый запуск
+  fetchAndApplyTheme();
 
   // Выход
   document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -81,7 +148,7 @@
     window.location.href = '/';
   });
 
-  // Клик по кнопке "Выбор темы": сразу редирект на /setting/chose
+  // Кнопка "Выбор темы"
   document.getElementById('openThemeJsonBtn').addEventListener('click', () => {
     window.location.href = '/chose';
   });

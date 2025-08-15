@@ -5,7 +5,6 @@ import (
 	"Project2/iteranal"
 	_ "embed"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	_ "github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"log"
@@ -17,7 +16,6 @@ import (
 
 // TIP <p>To run your code, right-click the code and select <b>Run</b>.</p> <p>Alternatively, click
 // the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.</p>
-var Store *sessions.CookieStore
 
 func main() {
 	router := mux.NewRouter()
@@ -43,6 +41,10 @@ func main() {
 	router.HandleFunc("/success", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "fronted/twofa-success.html")
 
+	})
+
+	router.HandleFunc("/study", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "fronted/Study.html")
 	})
 	router.HandleFunc("/two_check", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "fronted/two.check.html")
@@ -81,16 +83,17 @@ func main() {
 	securehandler := &cmd.SecureHandler{DB: db}
 	securesethandler := &cmd.SecureSethandler{DB: db}
 
-	theme := &cmd.Themestruch{}
-
 	loging := iteranal.Mildwary
 	handler := loging(router)
 
 	router.HandleFunc("/addnotes/api", addnoteshandler.ServeHTTP).Methods("POST")
 
+	router.HandleFunc("/setting/api", cmd.Settinge).Methods("GET")
+
 	router.HandleFunc("/register/api", registerhandler.Register).Methods("POST")
 	router.HandleFunc("/securest/api", securesethandler.Secure_set).Methods("POST")
-	router.HandleFunc("/chose/api", cmd.Theme(theme)).Methods("POST")
+	router.HandleFunc("/main/api", cmd.Maein).Methods("GET")
+	router.HandleFunc("/chose/api", cmd.Theme).Methods("POST")
 
 	router.HandleFunc("/secure/api", securehandler.Secure).Methods("POST")
 	router.HandleFunc("/profile/api", profilehandler.ServeHTTP).Methods("GET")

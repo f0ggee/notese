@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -40,6 +41,7 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		slog.Info("func addnotes2:", err)
 		return
 	}
+
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
@@ -49,7 +51,13 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
 		return
 	}
+	themem, oke := session.Values["fr"]
+	if !oke {
+		slog.Info("Don't set,theme ", themem)
 
+	}
+	s1 := fmt.Sprintf("%v", themem) // Преобразование через fmt.Sprintf
+	slog.Info("ffae", s1)
 	uuidid, ok := session.Values["cookie"]
 	if !ok {
 		slog.Error("dont get")
@@ -81,8 +89,12 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("func addnotes6: ALL OKAY :0 ")
 
+	rea := map[string]interface{}{
+		"theme": s1,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(w)
+	json.NewEncoder(w).Encode(rea)
 
 }

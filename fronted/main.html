@@ -2,20 +2,49 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Главная</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Главная — NotesApp</title>
 
-        body.dark-theme {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    <!-- Раннее применение темы из localStorage (во избежание FOUC) -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme'); // 'black' | 'white' | null
+                if (saved === 'black') {
+                    document.documentElement.classList.add('dark-theme');
+                } else if (saved === 'white') {
+                    document.documentElement.classList.add('light-theme');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
             margin: 0;
             padding: 0;
+            height: 100%;
         }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* ТЁМНАЯ ТЕМА */
+        .dark-theme body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .dark-theme section.more-info { background-color: #1e1e1e; }
+
+        /* СВЕТЛАЯ ТЕМА */
+        .light-theme body {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        .light-theme section.more-info { background-color: #f5f5f5; }
 
         header {
             display: flex;
@@ -35,10 +64,7 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
-
-        .header-btn:hover {
-            background-color: #6366f1;
-        }
+        .header-btn:hover { background-color: #6366f1; }
 
         main {
             display: flex;
@@ -55,7 +81,6 @@
             line-height: 1.6;
             margin-bottom: 2rem;
         }
-
         .instruction h1 {
             font-size: 2rem;
             margin-bottom: 1rem;
@@ -77,22 +102,14 @@
             cursor: pointer;
             transition: background 0.3s ease;
         }
+        #addNoteBtn:hover { background-color: #6366f1; }
 
-        #addNoteBtn:hover {
-            background-color: #6366f1;
-        }
-
-        section.more-info {
-            padding: 3rem 1.5rem;
-            background-color: #1e1e1e;
-        }
-
+        section.more-info { padding: 3rem 1.5rem; }
         section.more-info h2 {
             font-size: 1.5rem;
             margin-bottom: 1rem;
             text-align: center;
         }
-
         section.more-info p {
             max-width: 700px;
             margin: 0 auto;
@@ -102,41 +119,21 @@
         }
 
         @media (max-width: 600px) {
-            header {
-                justify-content: center;
-                padding: 1rem;
-            }
-
+            header { justify-content: center; padding: 1rem; }
             .header-btn {
                 flex: 1 1 auto;
                 font-size: 0.85rem;
                 padding: 10px 12px;
             }
-
-            .instruction h1 {
-                font-size: 1.6rem;
-            }
-
-            .instruction {
-                font-size: 1rem;
-            }
-
-            #addNoteBtn {
-                width: 100%;
-                max-width: 300px;
-            }
-
-            section.more-info h2 {
-                font-size: 1.3rem;
-            }
-
-            section.more-info {
-                padding: 2rem 1rem;
-            }
+            .instruction h1 { font-size: 1.6rem; }
+            .instruction { font-size: 1rem; }
+            #addNoteBtn { width: 100%; max-width: 300px; }
+            section.more-info h2 { font-size: 1.3rem; }
+            section.more-info { padding: 2rem 1rem; }
         }
     </style>
 </head>
-<body class="dark-theme">
+<body>
 
 <header>
     <button id="loginBtn" class="header-btn">Вход</button>
@@ -171,8 +168,25 @@
 </section>
 
 <script>
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    // Базовый префикс для всех API-запросов (GET /main/api)
+    const API_BASE = '/main/api';
 
+    // Обёртка для fetch: корректно формирует URL и делает GET (без кеша)
+    function apiFetch(path = '', options = {}) {
+        const url = API_BASE + (path ? (path.startsWith('/') ? path : '/' + path) : '');
+        return fetch(url, { method: 'GET', cache: 'no-store', ...options });
+    }
+
+    // Применение темы на корневом html (классы: dark-theme | light-theme)
+    function applyTheme(theme) {
+        document.documentElement.classList.remove('dark-theme', 'light-theme');
+        if (theme === 'black') document.documentElement.classList.add('dark-theme');
+        if (theme === 'white') document.documentElement.classList.add('light-theme');
+        try { localStorage.setItem('theme', theme); } catch (e) {}
+    }
+
+    // Инициализация UI по логину
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
     const profileBtn = document.getElementById('profileBtn');
@@ -187,22 +201,36 @@
         addNoteBtn.style.display = 'none';
     }
 
-    loginBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
+    loginBtn.addEventListener('click', () => { window.location.href = 'index.html'; });
+    registerBtn.addEventListener('click', () => { window.location.href = 'register.html'; });
+    profileBtn.addEventListener('click', () => { window.location.href = '/profile'; });
+    addNoteBtn.addEventListener('click', () => { window.location.href = '/add_notes'; });
 
-    registerBtn.addEventListener('click', () => {
-        window.location.href = 'register.html';
-    });
-
-    profileBtn.addEventListener('click', () => {
-        window.location.href = '/profile';
-    });
-
-    addNoteBtn.addEventListener('click', () => {
-        window.location.href = '/add_notes';
-    });
+    // 1) Тема уже применена из localStorage в <head>
+    // 2) Тянем актуальную тему с бэка и обновляем (ожидается 'black'/'white' либо {"theme":"..."})
+    apiFetch()
+        .then(async (r) => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const ct = r.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+                const data = await r.json();
+                return data && data.theme;
+            } else {
+                const text = (await r.text()).trim();
+                return text;
+            }
+        })
+        .then((theme) => {
+            if (theme === 'black' || theme === 'white') {
+                applyTheme(theme);
+            } else {
+                console.warn('Неожиданный ответ темы:', theme);
+            }
+        })
+        .catch((err) => {
+            console.error('Ошибка загрузки темы:', err);
+            // Остаёмся на сохранённой или дефолтной теме
+        });
 </script>
-
 </body>
 </html>

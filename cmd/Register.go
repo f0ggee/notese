@@ -30,6 +30,19 @@ func HashPassowrd(password string) (string, error) {
 
 }
 
+func chehkjson(r *http.Request) (*Person, error) {
+	var err error
+	var e Person
+
+	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
+		return nil, err
+	}
+
+	defer r.Body.Close()
+
+	return &e, err
+}
+
 func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "POST" {
@@ -38,22 +51,21 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	}
 	var err error
-	var person *Person
 
 	///контекст
 
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	slog.Info("fffff")
-
-	if err = json.NewDecoder(r.Body).Decode(&person); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		slog.Info("Func register1:", err)
+	t, err := chehkjson(r)
+	if err != nil {
+		slog.Error("Func login beta", err)
 		return
+	} else {
+		slog.Info("all okay func register ")
 	}
 
-	if !strings.Contains(person.Email, "@") {
+	if !strings.Contains(t.Email, "@") {
 		http.Error(w, "Person name must contain @", http.StatusBadRequest)
 		slog.Info("Func register2:", err)
 		return
@@ -61,7 +73,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	var existingPerson bool
 
-	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS (select 1 FROM person WHERE email=$1)", person.Email).Scan(&existingPerson)
+	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS (select 1 FROM person WHERE email=$1)", t.Email).Scan(&existingPerson)
 	///проверка на валидность запроса
 
 	if err == context.DeadlineExceeded {
@@ -86,13 +98,13 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 	////
 
-	f, err := HashPassowrd(person.Password)
+	f, err := HashPassowrd(t.Password)
 	if err != nil {
 		slog.Error("Error:", err)
 	}
 
 	var userid int
-	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", person.Name, person.Email, f).Scan(&userid)
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", t.Name, t.Email, f).Scan(&userid)
 
 	if errors.Is(err, context.DeadlineExceeded) {
 		http.Error(w, err.Error(), http.StatusRequestTimeout)
@@ -164,7 +176,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	mape := map[string]interface{}{
 		"ID":   id,
-		"name": person.Name,
+		"name": t.Name,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

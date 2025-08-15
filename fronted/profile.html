@@ -7,7 +7,6 @@
   <style>
     * { box-sizing: border-box; }
 
-    /* Базовая раскладка: значения берутся из CSS-переменных темы */
     body {
       margin: 0; padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +14,6 @@
       color: var(--text);
     }
 
-    /* Тема black */
     body.black {
       --bg: #121212;
       --text: #ffffff;
@@ -29,7 +27,6 @@
       --btn-text: #ffffff;
     }
 
-    /* Тема white */
     body.white {
       --bg: #f5f5f7;
       --text: #111111;
@@ -47,37 +44,77 @@
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
       background: var(--header-bg); padding: 1rem 2rem; box-shadow: 0 0 10px var(--shadow);
     }
+
     .username { font-size: 1rem; margin-bottom: 0.5rem; }
 
-    header > div:last-child { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    header > div:last-child {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+    }
 
     .logout-btn, .settings-btn {
       padding: 8px 16px; border: none; border-radius: 8px;
       background: var(--accent); color: var(--btn-text); font-size: 0.9rem; cursor: pointer; transition: background 0.3s ease;
     }
-    .logout-btn:hover, .settings-btn:hover { background: var(--accent-hover); }
 
-    main { display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
-    h1 { font-size: 2rem; margin-bottom: 2rem; text-align: center; }
+    .logout-btn:hover, .settings-btn:hover {
+      background: var(--accent-hover);
+    }
 
-    .notes-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 700px; }
+    main {
+      display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2rem; margin-bottom: 2rem; text-align: center;
+    }
+
+    .notes-container {
+      display: flex; flex-direction: column; gap: 1rem;
+      width: 100%; max-width: 700px;
+    }
 
     .note-card {
-      background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
-      padding: 1rem; position: relative; word-wrap: break-word;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1rem; position: relative;
+      word-wrap: break-word;
     }
-    .note-title { font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 600; }
-    .note-time { position: absolute; top: 1rem; right: 1rem; font-size: 0.85rem; color: var(--muted); }
-    .note-content { margin-top: 2rem; font-size: 1rem; line-height: 1.5; white-space: pre-wrap; }
+
+    .note-title {
+      font-size: 1.2rem; margin-bottom: 0.5rem; font-weight: 600;
+    }
+
+    .note-time {
+      position: absolute; top: 1rem; right: 1rem;
+      font-size: 0.85rem; color: var(--muted);
+    }
+
+    .note-content {
+      margin-top: 2rem; font-size: 1rem; line-height: 1.5; white-space: pre-wrap;
+    }
 
     @media (max-width: 600px) {
-      header { flex-direction: column; align-items: flex-start; padding: 1rem; }
+      header {
+        flex-direction: column; align-items: flex-start; padding: 1rem;
+      }
+
       .username { font-size: 1rem; margin-bottom: 0.5rem; }
-      header > div:last-child { width: 100%; justify-content: flex-start; }
-      .logout-btn, .settings-btn { flex: 1 1 auto; font-size: 0.85rem; padding: 10px 12px; }
+
+      header > div:last-child {
+        width: 100%; justify-content: flex-start;
+      }
+
+      .logout-btn, .settings-btn {
+        flex: 1 1 auto; font-size: 0.85rem; padding: 10px 12px;
+      }
+
       h1 { font-size: 1.6rem; }
+
       .note-title { font-size: 1.1rem; }
-      .note-time { position: static; text-align: right; margin-top: 0.5rem; }
+
+      .note-time {
+        position: static; text-align: right; margin-top: 0.5rem;
+      }
+
       .note-card { padding: 1rem 0.75rem; }
     }
   </style>
@@ -97,7 +134,6 @@
 </main>
 
 <script>
-  // Если не авторизован — на главную
   if (localStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = '/';
   }
@@ -126,7 +162,6 @@
     window.location.href = '/';
   }
 
-  // Применение темы напрямую: 'black' | 'white' => классы 'black' | 'white'
   function applyTheme(theme) {
     const t = (theme || '').toLowerCase();
     document.body.classList.remove('black', 'white');
@@ -135,39 +170,6 @@
     } else {
       document.body.classList.add('black');
     }
-  }
-
-  // Попытаться вытащить тему из профиля либо ручки /theme/api
-  async function resolveThemeFromServer(profileData) {
-    let themeCandidate = null;
-
-    if (typeof profileData === 'string') {
-      themeCandidate = profileData;              // "black" | "white"
-    } else if (profileData && typeof profileData === 'object' && 'theme' in profileData) {
-      themeCandidate = profileData.theme;        // { theme: "black" | "white" }
-    }
-
-    if (themeCandidate) {
-      applyTheme(themeCandidate);
-      return;
-    }
-
-    try {
-      const tr = await fetch('/theme/api', { credentials: 'include' });
-      if (tr.ok) {
-        const tdata = await tr.json();
-        const t = (typeof tdata === 'string') ? tdata : (tdata && tdata.theme);
-        if (t) {
-          applyTheme(t);
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('Не удалось получить тему из /theme/api:', e);
-    }
-
-    // По умолчанию — black
-    applyTheme('black');
   }
 
   async function loadProfile() {
@@ -182,8 +184,9 @@
 
       const data = await res.json();
 
-      // Установка темы на основе данных сервера
-      resolveThemeFromServer(data);
+      // Применить тему из профиля или default black
+      const theme = (typeof data?.theme === 'string') ? data.theme : 'black';
+      applyTheme(theme);
 
       const name = (data && data.name) ? data.name : 'Пользователь';
       if (userNameDiv) {

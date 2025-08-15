@@ -37,15 +37,16 @@ func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cookie dont sent", http.StatusUnauthorized)
 		return
 	}
-	themem, ok := session.Values["color"]
-	if !ok {
-		slog.Info("Don't set ")
-	}
 
 	uuidid, ok := session.Values["cookie"]
 	if !ok {
 		slog.Error("dont get")
 		return
+
+	}
+	themem, oke := session.Values["th"].(string)
+	if !oke {
+		slog.Info("Don't set,theme ", themem)
 
 	}
 
@@ -115,7 +116,6 @@ func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"name":  name,
 		"theme": themem,
-
 		"notes": note,
 	}
 
