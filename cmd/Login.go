@@ -132,7 +132,7 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	session.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   100000,
-		Secure:   false,
+		Secure:   true,
 		HttpOnly: true,
 	}
 

@@ -99,5 +99,10 @@ func main() {
 	router.HandleFunc("/profile/api", profilehandler.ServeHTTP).Methods("GET")
 	router.HandleFunc("/login/api", loginhandler.Login).Methods("POST")
 
-	log.Fatal(http.ListenAndServe("localhost:8080", handler))
+	err = http.ListenAndServeTLS(":443", "/etc/letsencrypt/live/qpe.com.ru/fullchain.pem", "/etc/letsencrypt/live/qpe.com.ru/privkey.pem", handler)
+	if err != nil {
+		slog.Error("Error to start server", err)
+		return
+
+	}
 }
