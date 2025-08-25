@@ -3,12 +3,14 @@ package cmd
 import (
 	"Project2/iteranal"
 	"context"
+	"crypto/rand"
 	_ "crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/sessions"
-	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/scrypt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -22,12 +24,6 @@ type Person struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-func HashPassowrd(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
-	return string(bytes), err
-
 }
 
 func chehkjson(r *http.Request) (*Person, error) {
@@ -74,8 +70,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var existingPerson bool
 
 	err = e.DB.QueryRowContext(ctx, "SELECT EXISTS (select 1 FROM person WHERE email=$1)", t.Email).Scan(&existingPerson)
-	///проверка на валидность запроса
-
+	///проверка на валидность запрос
 	if err == context.DeadlineExceeded {
 
 		slog.Error("Func register2:", err)
@@ -96,15 +91,21 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Func register5:", err)
 		return
 	}
+
 	////
 
-	f, err := HashPassowrd(t.Password)
+	f, err := iteranal.HashPassowrd(t.Password)
 	if err != nil {
-		slog.Error("Error:", err)
+		slog.Error("Cant generate password", err)
+		return
 	}
+	salt := make([]byte, 16)
+	rand.Read(salt)
+	D3, _ := scrypt.Key([]byte(f), salt, 1<<15, 8, 1, 32)
+	D4 := hex.EncodeToString(D3)
 
 	var userid int
-	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password) VALUES ($1,$2,$3) RETURNING id", t.Name, t.Email, f).Scan(&userid)
+	err = e.DB.QueryRowContext(ctx, "INSERT INTO person(name,email,password,scrypt_salt) VALUES ($1,$2,$3,$4) RETURNING id", t.Name, t.Email, f, D4).Scan(&userid)
 
 	if errors.Is(err, context.DeadlineExceeded) {
 		http.Error(w, err.Error(), http.StatusRequestTimeout)
@@ -126,7 +127,6 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Func register9:", err)
 		return
 	}
-	slog.Info("Func register11112212")
 
 	//expires := time.Now().Add(time.Hour * 24)
 	session, err := store.Get(r, "token1")
@@ -142,7 +142,7 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 	session.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   3000,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 	}
 
@@ -174,13 +174,9 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	mape := map[string]interface{}{
-		"ID":   id,
-		"name": t.Name,
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(mape); err != nil {
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(w); err != nil {
 		slog.Error("Func register14:", err)
 		return
 	}

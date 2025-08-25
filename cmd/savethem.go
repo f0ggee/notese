@@ -28,7 +28,7 @@ func chechkjson(r *http.Request) (*Themestruch, error) {
 func Theme(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Mehod dont allow", http.StatusBadRequest)
-		slog.Info("H")
+		slog.Info("Metod don't allow in chos theme ")
 		return
 
 	}
@@ -52,7 +52,7 @@ func Theme(w http.ResponseWriter, r *http.Request) {
 	session.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   100000,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 	}
 

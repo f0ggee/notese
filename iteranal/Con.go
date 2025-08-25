@@ -2,6 +2,7 @@ package iteranal
 
 import (
 	"context"
+	"github.com/gorilla/sessions"
 	"golang.org/x/crypto/bcrypt"
 	"strconv"
 
@@ -27,13 +28,11 @@ func GetClientIP(r *http.Request) string {
 	return r.RemoteAddr
 }
 
+var store = sessions.NewCookieStore([]byte("KEY"))
+
 func Mildwary(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		//fmt.Printf("ip:%s\n", GetClientIP(r))
-		//fmt.Printf("Method %s\n", r.Method)
-		//fmt.Printf("URL %s\n", r.URL)
 
 		next.ServeHTTP(w, r)
 

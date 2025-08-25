@@ -5,17 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Главная — NotesApp</title>
 
-    <!-- Раннее применение темы из localStorage (во избежание FOUC) -->
+    <!-- Раннее применение темы из localStorage (по умолчанию тёмная) -->
     <script>
         (function () {
             try {
                 var saved = localStorage.getItem('theme'); // 'black' | 'white' | null
-                if (saved === 'black') {
+                if (saved === 'black' || saved === null) {
+                    // По умолчанию всегда темная
                     document.documentElement.classList.add('dark-theme');
+                    if (saved === null) localStorage.setItem('theme', 'black');
                 } else if (saved === 'white') {
                     document.documentElement.classList.add('light-theme');
                 }
-            } catch (e) {}
+            } catch (e) {
+                // Если localStorage недоступен, тоже ставим темную
+                document.documentElement.classList.add('dark-theme');
+            }
         })();
     </script>
 

@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Добавить заметку</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       background-color: #ffffff;
@@ -22,93 +20,48 @@
       color: #ffffff;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-      font-size: 1.75rem;
-    }
+    h1 { text-align: center; margin-bottom: 2rem; font-size: 1.75rem; }
 
     form {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      padding: 1rem;
-      background-color: #f5f5f5;
-      border-radius: 12px;
+      width: 100%; max-width: 600px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      padding: 1rem; background-color: #f5f5f5; border-radius: 12px;
     }
 
-    body.dark-theme form {
-      background-color: #1a1a1a;
-    }
+    body.dark-theme form { background-color: #1a1a1a; }
 
-    label {
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
-      display: inline-block;
-    }
+    label { font-size: 1rem; margin-bottom: 0.5rem; display: inline-block; }
 
     input, textarea {
-      width: 100%;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      background-color: #ffffff;
-      color: #000000;
-      font-size: 1rem;
+      width: 100%; padding: 10px 14px; border: none; border-radius: 8px;
+      background-color: #ffffff; color: #000000; font-size: 1rem;
     }
 
     body.dark-theme input,
     body.dark-theme textarea {
-      background-color: #1e1e1e;
-      color: #ffffff;
+      background-color: #1e1e1e; color: #ffffff;
     }
 
-    input:focus, textarea:focus {
-      outline: 2px solid #4f46e5;
-    }
+    input:focus, textarea:focus { outline: 2px solid #4f46e5; }
 
-    textarea {
-      resize: vertical;
-      min-height: 150px;
-    }
+    textarea { resize: vertical; min-height: 150px; }
 
     button {
-      align-self: flex-end;
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      background-color: #4f46e5;
-      color: #ffffff;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.3s ease;
+      align-self: flex-end; padding: 12px 24px; border: none; border-radius: 8px;
+      background-color: #4f46e5; color: #ffffff; font-size: 1rem;
+      cursor: pointer; transition: background 0.3s ease;
     }
 
-    button:hover {
-      background-color: #6366f1;
-    }
+    button:hover { background-color: #6366f1; }
 
     @media (max-width: 480px) {
-      h1 {
-        font-size: 1.4rem;
-      }
-
-      form {
-        padding: 1rem 0.5rem;
-        border-radius: 8px;
-      }
-
-      button {
-        width: 100%;
-        align-self: center;
-      }
+      h1 { font-size: 1.4rem; }
+      form { padding: 1rem 0.5rem; border-radius: 8px; }
+      button { width: 100%; align-self: center; }
     }
   </style>
 </head>
-<body>
+<body class="dark-theme"><!-- по умолчанию тёмная -->
 
 <h1>Добавить новую заметку</h1>
 
@@ -132,12 +85,13 @@
 </form>
 
 <script>
-  // Применение темы по значению theme
+  // Применяем тему: white -> светлая, black -> тёмная
   function applyTheme(theme) {
-    if (theme === 'dark') {
-      document.body.classList.add('dark-theme');
-    } else {
+    const t = String(theme || '').toLowerCase();
+    if (t === 'white') {
       document.body.classList.remove('dark-theme');
+    } else if (t === 'black') {
+      document.body.classList.add('dark-theme');
     }
   }
 
@@ -145,7 +99,8 @@
   fetch('/api/user/theme', { credentials: 'include' })
           .then(res => res.ok ? res.json() : null)
           .then(data => {
-            if (data && data.theme) {
+            // ожидаем { "theme": themem }
+            if (data && typeof data.theme === 'string') {
               applyTheme(data.theme);
             }
           })
@@ -163,9 +118,7 @@
     try {
       const response = await fetch('/addnotes/api', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(note)
       });
@@ -184,8 +137,8 @@
 
       const result = await response.json();
 
-      // Применяем тему из ответа
-      if (result.theme) {
+      // ожидаем { "theme": themem }
+      if (result && typeof result.theme === 'string') {
         applyTheme(result.theme);
       }
 

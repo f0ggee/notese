@@ -3,22 +3,51 @@ package cmd
 import (
 	"Project2/iteranal"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
-	"time"
 )
 
 type ProfileHandler struct {
 	DB *sql.DB
 }
 
-type Notes struct {
-	Title     string    `json:"title"`
-	CreatedAt time.Time `json:"createdAt"`
-	Content   string    `json:"content"`
+func Transfer_Passworde(s string, nonce string, data string) (string, error) {
+
+	scrypt, err := hex.DecodeString(s)
+	if err != nil {
+		slog.Error("Err in add notes", err)
+		return "", err
+	}
+	Nonce, err := hex.DecodeString(nonce)
+	if err != nil {
+		slog.Error("Error in ", err)
+	}
+
+	datae, err := hex.DecodeString(data)
+	if err != nil {
+		slog.Error("Cant convert", err)
+		return "", err
+	}
+	block, err := aes.NewCipher(scrypt)
+	if err != nil {
+		slog.Error("Err", err)
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		slog.Error("Errr")
+		return "", err
+	}
+
+	cyphertext, err := aesGCM.Open(nil, Nonce, datae, nil)
+
+	return string(cyphertext), nil
 }
 
 func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +101,7 @@ func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err2 := e.DB.QueryContext(ctx, "SELECT title,created_at,content  FROM notes  WHERE author_cookie = $1  ", uuidid)
+	rows, err2 := e.DB.QueryContext(ctx, "SELECT hash_notes,nonce  FROM notes  WHERE author_cookie = $1  ", uuidid)
 	if err2 == context.DeadlineExceeded {
 		slog.Info("Func profile1:deadline exceeded")
 		http.Error(w, "Deadline exceeded", http.StatusRequestTimeout)
@@ -89,22 +118,34 @@ func (e *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cookie not found", http.StatusUnauthorized)
 		return
 	}
+	var hash_notes string
+	var nonce string
+
+	salate, oke := session.Values["salta"].(string)
+	if !oke {
+		slog.Info("Func addNotes can't get", oke)
+	}
 
 	defer rows.Close()
 
-	var note []Notes
+	var note []string
 
 	for rows.Next() {
-		var n Notes
 
-		err43 := rows.Scan(&n.Title, &n.CreatedAt, &n.Content)
+		err43 := rows.Scan(&hash_notes, &nonce)
 
 		if err43 != nil {
 			slog.Error("Err func profile 4", err43)
 			return
 		}
 
-		note = append(note, n)
+		dyscrypt, err23 := Transfer_Passworde(salate, nonce, hash_notes)
+		if err23 != nil {
+			slog.Error("ERR", err)
+			return
+		}
+
+		note = append(note, dyscrypt)
 
 	}
 

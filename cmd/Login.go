@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/sessions"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 	"net/http"
 )
@@ -19,16 +18,6 @@ type LoginHandler struct {
 type HandlerRegister struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-func chekcpasswor(hash string, password string) bool {
-
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err == nil {
-		return true
-	}
-	return false
-
 }
 
 var store = sessions.NewCookieStore([]byte("KEY"))
@@ -52,13 +41,20 @@ func parse(r *http.Request) (*HandlerRegister, error) {
 }
 
 func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var err error
+
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 
 	}
 
-	var err error
+	session, err := store.Get(r, "token1")
+	if err != nil {
+		slog.Error("cookie don't send", err)
+		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
+		return
+	}
 	logger := zap.Must(zap.NewProduction())
 	defer logger.Sync()
 	sugar := logger.Sugar()
@@ -76,10 +72,11 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	var id int
 	var password string
+	var scrypt_salt string
 
-	err = d.DB.QueryRowContext(ctx, `SELECT  id,password  FROM person WHERE email = $1`, t.Email).Scan(&id, &password)
+	err = d.DB.QueryRowContext(ctx, `SELECT  id,password,scrypt_salt  FROM person WHERE email = $1`, t.Email).Scan(&id, &password, &scrypt_salt)
 	slog.Info(password)
-	ok := chekcpasswor(password, t.Password)
+	ok := iteranal.CheckPassword(t.Password, password)
 
 	if !ok {
 		slog.Info("Func login dont")
@@ -118,21 +115,14 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	///expires := time.Now().Add(time.Hour * 24)
-	session, err := store.Get(r, "token1")
-	if err != nil {
-
-		slog.Error("Cookie don't set")
-		http.Error(w, "cokie don't set", http.StatusUnauthorized)
-		return
-	}
 
 	session.Values["cookie"] = cookie
-	slog.Info(cookie)
+	session.Values["salta"] = scrypt_salt
 
 	session.Options = &sessions.Options{
 		Path:     "/",
 		MaxAge:   100000,
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 	}
 
@@ -163,12 +153,9 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 		slog.Info("func register9:ok")
 
 	}
-	mape := map[string]interface{}{
-		"cookie": cookie,
-	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(mape)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(w)
 
 }
