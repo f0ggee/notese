@@ -25,10 +25,27 @@ type AddNotesResponse struct {
 	Content string `json:"content"`
 }
 
-func Logging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func coks(w http.ResponseWriter, r *http.Request) (string, string, bool, error) {
+	session, err := store.Get(r, "token1")
+	if err != nil {
+		slog.Error("cookie don't send", err)
+		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
+		return "", "", false, err
+	}
+	salate, oke := session.Values["salta"].(string)
+	if !oke {
+		slog.Info("Func addNotes can't get", oke)
+		return "", "", false, nil
+	}
 
-	})
+	uuidid, oke := session.Values["cookie"].(string)
+	if !oke {
+		slog.Error("dont get")
+		return "", "", false, nil
+
+	}
+
+	return salate, uuidid, true, nil
 }
 
 func Transfer_Password(slate, structe string) (string, string, error) {
@@ -59,8 +76,6 @@ func Transfer_Password(slate, structe string) (string, string, error) {
 	cyphertexte := hex.EncodeToString(cyphertext)
 	noncee := hex.EncodeToString(nonce)
 
-	slog.Info("Шифровка", cyphertexte)
-
 	return cyphertexte, noncee, nil
 }
 
@@ -89,29 +104,17 @@ func (e *AddNotesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := iteranal.Contexte()
 	defer cancel()
 
-	session, err := store.Get(r, "token1")
-	if err != nil {
-		slog.Error("cookie don't send", err)
-		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
-		return
-	}
-	salate, oke := session.Values["salta"].(string)
-	if !oke {
-		slog.Info("Func addNotes can't get", oke)
-	}
 	str := fmt.Sprintf("%+v", b)
+
+	salate, uuidid, ok, err := coks(w, r)
+	if err != nil || !ok {
+		slog.Error("Can't get ", err, ok)
+	}
 
 	Hash, nonce, err := Transfer_Password(salate, str)
 	if err != nil {
 		slog.Info("Can't parse", err)
 		return
-	}
-
-	uuidid, ok := session.Values["cookie"]
-	if !ok {
-		slog.Error("dont get")
-		return
-
 	}
 
 	_, _ = e.DB.ExecContext(ctx, "INSERT INTO notes(hash_notes,nonce,author_cookie) values ($1,$2,$3)", Hash, nonce, uuidid)

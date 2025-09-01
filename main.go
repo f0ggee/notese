@@ -101,10 +101,10 @@ func main() {
 	router.HandleFunc("/login/api", loginhandler.Login).Methods("POST")
 	router.HandleFunc("/Download/api", cmd.S3).Methods("POST")
 
-	err = http.ListenAndServe("localhost:8080", handler)
-	if err != nil {
-		slog.Error("Error to start server", err)
-		return
+	err = http.ListenAndServeTLS(":443", "/etc/letsencrypt/live/qpe.com.ru/fullchain.pem", "/etc/letsencrypt/live/qpe.com.ru/privkey.pem", handler)
 
+	if err != nil {
+		slog.Error("Cant connect and start ", err)
 	}
+
 }

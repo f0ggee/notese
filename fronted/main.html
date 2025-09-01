@@ -229,12 +229,13 @@
             if (theme === 'black' || theme === 'white') {
                 applyTheme(theme);
             } else {
-                console.warn('Неожиданный ответ темы:', theme);
+                console.warn('Неожиданный ответ темы:', theme, ' — ставим по умолчанию dark');
+                applyTheme('black'); // fallback на тёмную
             }
         })
         .catch((err) => {
-            console.error('Ошибка загрузки темы:', err);
-            // Остаёмся на сохранённой или дефолтной теме
+            console.error('Ошибка загрузки темы:', err, ' — ставим по умолчанию dark');
+            applyTheme('black'); // fallback на тёмную
         });
 </script>
 </body>

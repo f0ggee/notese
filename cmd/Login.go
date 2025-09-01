@@ -49,6 +49,8 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	}
 
+	defer r.Body.Close()
+
 	session, err := store.Get(r, "token1")
 	if err != nil {
 		slog.Error("cookie don't send", err)
@@ -121,8 +123,8 @@ func (d *LoginHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	session.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   100000,
-		Secure:   false,
+		MaxAge:   1000000000,
+		Secure:   true,
 		HttpOnly: true,
 	}
 

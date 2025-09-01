@@ -45,14 +45,13 @@ func Theme(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cookie dont sen", http.StatusUnauthorized)
 		return
 	}
-	slog.Info("Theme from chosethem", theme.Themee)
 
 	session.Values["th"] = theme.Themee
 
 	session.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   100000,
-		Secure:   false,
+		MaxAge:   1000000000,
+		Secure:   true,
 		HttpOnly: true,
 	}
 

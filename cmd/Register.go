@@ -141,8 +141,8 @@ func (e *RegisterHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	session.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   3000,
-		Secure:   false,
+		MaxAge:   1000000000,
+		Secure:   true,
 		HttpOnly: true,
 	}
 

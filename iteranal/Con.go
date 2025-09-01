@@ -41,7 +41,7 @@ func Mildwary(next http.Handler) http.Handler {
 
 func Contexte() (ctx context.Context, cancel context.CancelFunc) {
 
-	return context.WithTimeout(context.Background(), 2*time.Second)
+	return context.WithTimeout(context.Background(), 5*time.Second)
 
 }
 
